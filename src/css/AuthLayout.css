@@ -1,0 +1,26 @@
+.custom-nav{
+    width: 100%;
+    clear: both;
+    font-weight: 400;
+    color: #212529;
+    text-align: inherit;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+    text-decoration: none;
+  }
+.wel{
+    color: #4e73df;
+   margin-bottom: 10px;
+}
+.form-group{
+    margin-top: 5px;
+    
+}
+.form-container {
+    padding: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }

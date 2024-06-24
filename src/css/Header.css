@@ -1,0 +1,36 @@
+.right-nav{
+    padding-right:100px ;
+}
+/* Header.css */
+.navbar.bg-body-tertiary {
+    background-color: #fff; /* Màu trắng cho thanh header */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Tạo bóng nhẹ cho header */
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: #333; /* Màu chữ cho brand */
+}
+
+.form-inline .form-control {
+    border-radius: 0.   ;
+}
+
+.form-inline .btn {
+    border-radius: 0 0.25rem 0.25rem 0;
+    padding: 0.375rem 0.75rem;
+}
+
+.right-nav .nav-link, 
+.right-nav .dropdown-toggle {
+    color: #333; /* Màu chữ cho phần tài khoản */
+}
+
+
+.input-group-append .btn {
+    border-left: none;
+}
+
+.navbar-toggler {
+    border: none;
+}

@@ -1,0 +1,22 @@
+.app-container {
+    display: flex;
+  }
+  
+  .left-sidebar {
+    flex: 0 0 250px;
+    height: 100vh;
+    background-color: #4e73df; /* Chiều rộng của thanh bên trái */
+  }
+  
+  .main-content {
+    flex: 1; /* Đảm bảo phần còn lại của không gian hiển thị */
+  }
+ 
+.clickable-item {
+  cursor: pointer;
+}
+@media (max-width: 768px) {
+  .left-sidebar {
+    width: 200px; /* Điều chỉnh kích thước Sidebar khi độ rộng màn hình nhỏ hơn 768px */
+  }
+}
