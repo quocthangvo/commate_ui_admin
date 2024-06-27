@@ -13,7 +13,7 @@ export default function CategoryList() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
 
-  useEffect(() => {
+  const fetchCategories = () => {
     categoriesApi
       .getAllCategories()
       .then((response) => {
@@ -22,6 +22,10 @@ export default function CategoryList() {
       .catch((error) => {
         console.log(error);
       });
+  };
+
+  useEffect(() => {
+    fetchCategories();
   }, []);
 
   const handleDelete = () => {
@@ -30,6 +34,7 @@ export default function CategoryList() {
       .then((response) => {
         if (response.status === 200) {
           toast(response.data.message);
+          fetchCategories();
         } else {
           showErrorMessage("Không thể xóa");
         }

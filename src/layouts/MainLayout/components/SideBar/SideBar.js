@@ -71,8 +71,19 @@ export default function SideBar() {
         <div className="sidebar-heading">Đơn hàng</div>
 
         <li className="nav-item active">
-          <Link className="nav-link m-3" to="/orders">
+          <Link className="nav-link m-3" to="/products/uploads/:id">
             <span>Đơn đặt hàng</span>
+          </Link>
+          <div
+            id="collapsePages"
+            className="collapse show"
+            aria-labelledby="headingPages"
+            data-parent="#accordionSidebar"
+          ></div>
+        </li>
+        <li className="nav-item active">
+          <Link className="nav-link m-3" to="/suppliers">
+            <span>Nhà cung cấp</span>
           </Link>
           <div
             id="collapsePages"

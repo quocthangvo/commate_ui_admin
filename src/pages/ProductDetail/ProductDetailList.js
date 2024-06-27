@@ -19,10 +19,6 @@ export default function ProductDetailList() {
 
   const { setValue } = useForm();
 
-  useEffect(() => {
-    fetchProductDetails(); // dùng để trả load lại trang khi thực hiện hđ
-  }, []);
-
   const fetchProductDetails = () => {
     productDetailsApi
       .getByProductId(productId)
@@ -33,6 +29,9 @@ export default function ProductDetailList() {
         console.log(error);
       });
   };
+  useEffect(() => {
+    fetchProductDetails(); // dùng để trả load lại trang khi thực hiện hđ
+  }, []);
 
   useEffect(() => {
     if (productDetails.length > 0) {
@@ -48,8 +47,8 @@ export default function ProductDetailList() {
       .deleteProductDetail(productDetailId)
       .then((response) => {
         if (response.status === 200) {
-          fetchProductDetails();
           toast.success(response.data.message);
+          fetchProductDetails();
         }
       })
       .catch((error) => {

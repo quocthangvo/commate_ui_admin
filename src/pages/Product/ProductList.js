@@ -16,9 +16,9 @@ export default function ProductList() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
-  const [categoryId, setCategoryId] = useState([]);
+  const [categoryId, setCategoryId] = useState(""); // Ensure this is a string
   const [categories, setCategories] = useState([]);
-  const [searchValue, setSearchValue] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
 
   const {
     register,
@@ -72,7 +72,7 @@ export default function ProductList() {
         showErrorMessage(error.response.data.message);
       });
   };
-  //lọc theo category
+
   useEffect(() => {
     categoriesApi.getAllCategories().then((response) => {
       setCategories(response.data.data);
@@ -98,12 +98,11 @@ export default function ProductList() {
 
   const handleCategoryChange = (event) => {
     const selectedCategoryId = event.target.value;
-    setCategoryId(selectedCategoryId); // Cập nhật state categoryId khi người dùng chọn
+    setCategoryId(selectedCategoryId); // Ensure this is a scalar value
     if (selectedCategoryId !== "") {
-      findByCategoryId(selectedCategoryId); // Gọi hàm tìm kiếm sản phẩm khi categoryId thay đổi
+      findByCategoryId(selectedCategoryId);
     } else {
       setProducts([]);
-      // Nếu không có categoryId được chọn, trả về
     }
   };
 
@@ -113,12 +112,13 @@ export default function ProductList() {
     setTimeout(() => {
       setShowError(false);
       setErrorMessage("");
-    }, 3000); // 3 giây
+    }, 3000); // 3 seconds
   };
 
   const handleRefresh = () => {
     window.location.reload();
   };
+
   const clearFilter = () => {
     setSearchValue("");
     setCategoryId(""); // Clear categoryId filter
@@ -177,7 +177,7 @@ export default function ProductList() {
             <select
               {...register("category_id")}
               value={categoryId}
-              onChange={handleCategoryChange} // Xử lý sự kiện khi thay đổi dropdown
+              onChange={handleCategoryChange}
               className={`form-select ${errors.categories ? "is-invalid" : ""}`}
             >
               <option value="" disabled>

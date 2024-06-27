@@ -20,6 +20,10 @@ import Account from "./pages/Login/Account";
 import UserList from "./pages/User/UserList";
 import CreateUser from "./pages/User/components/CreateUser";
 import UpdateUser from "./pages/User/components/UpdateUser/UpdateUser";
+import SupplierList from "./pages/Supplier/SupplierList";
+import CreateSupplier from "./pages/Supplier/components/CreateSupplier";
+import UpdateSupplier from "./pages/Supplier/components/UpdateSupplier";
+import UploadImage from "./pages/Product/components/UploadImage";
 
 export default function useRouterElement() {
   return useRoutes([
@@ -30,6 +34,10 @@ export default function useRouterElement() {
           <Login />
         </AuthLayout>
       ),
+    },
+    {
+      path: "/mainLayout",
+      element: <MainLayout />,
     },
     {
       path: "/products",
@@ -52,6 +60,14 @@ export default function useRouterElement() {
       element: (
         <MainLayout>
           <UpdateProduct />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/products/uploads/:id",
+      element: (
+        <MainLayout>
+          <UploadImage />
         </MainLayout>
       ),
     },
@@ -144,8 +160,28 @@ export default function useRouterElement() {
       ),
     },
     {
-      path: "/mainLayout",
-      element: <MainLayout />,
+      path: "/suppliers",
+      element: (
+        <MainLayout>
+          <SupplierList />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/suppliers/create",
+      element: (
+        <MainLayout>
+          <CreateSupplier />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/suppliers/:id",
+      element: (
+        <MainLayout>
+          <UpdateSupplier />
+        </MainLayout>
+      ),
     },
     {
       path: "/account",
@@ -176,6 +212,14 @@ export default function useRouterElement() {
       element: (
         <MainLayout>
           <UpdateUser />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/products/upload/:id",
+      element: (
+        <MainLayout>
+          <UploadImage />
         </MainLayout>
       ),
     },

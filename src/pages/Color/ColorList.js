@@ -12,7 +12,7 @@ export default function ColorList() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
 
-  useEffect(() => {
+  const fetchColors = () => {
     colorsApi
       .getAllColors()
       .then((response) => {
@@ -21,6 +21,10 @@ export default function ColorList() {
       .catch((error) => {
         console.log(error);
       });
+  };
+
+  useEffect(() => {
+    fetchColors();
   }, []);
 
   const handleDelete = () => {
@@ -29,6 +33,7 @@ export default function ColorList() {
       .then((response) => {
         if (response.status === 200) {
           toast(response.data.message);
+          fetchColors();
         } else {
           showErrorMessage("Không thể xóa");
         }

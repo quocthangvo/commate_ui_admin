@@ -2,22 +2,22 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Alert, Button, Table } from "react-bootstrap";
-import sizesApi from "../../apis/sizesApi";
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
+import suppliersApi from "../../apis/suppliersApi";
 
-export default function SizeList() {
-  const [sizes, setSizes] = useState([]);
-  const [sizeId, setSizeId] = useState(null);
+export default function SupplierList() {
+  const [suppliers, setSuppliers] = useState([]);
+  const [supplierId, setSupplierId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
 
-  const fetchSizes = () => {
-    sizesApi
-      .getAllSizes()
+  const fetchSuppliers = () => {
+    suppliersApi
+      .getAllSuppliers()
       .then((response) => {
-        setSizes(response.data.data);
+        setSuppliers(response.data.data);
       })
       .catch((error) => {
         console.log(error);
@@ -25,18 +25,16 @@ export default function SizeList() {
   };
 
   useEffect(() => {
-    fetchSizes();
+    fetchSuppliers();
   }, []);
 
   const handleDelete = () => {
-    sizesApi
-      .deleteSize(sizeId)
+    suppliersApi
+      .deleteSupplier(supplierId)
       .then((response) => {
         if (response.status === 200) {
           toast(response.data.message);
-          fetchSizes();
-        } else {
-          showErrorMessage("Không thể xóa");
+          fetchSuppliers();
         }
       })
       .catch((error) => {
@@ -44,7 +42,7 @@ export default function SizeList() {
       })
       .finally(() => {
         setShowConfirmModal(false);
-        setSizeId(null);
+        setSupplierId(null);
       });
   };
 
@@ -63,23 +61,23 @@ export default function SizeList() {
   return (
     <div>
       <ConfirmModal
-        title="Confirm Delete"
+        title="Xác nhận xóa"
         content="Bạn có muốn xóa không?"
         onClick={handleDelete}
         show={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
       />
       <div className="container my-4">
-        <h2 className="text-center mb-4">Kích thước</h2>
+        <h2 className="text-center mb-4">Nhà cung cấp</h2>
         {showError && <Alert variant="danger">{errorMessage}</Alert>}
         <div className="row mb-3">
           <div className="col">
             <Link
               className="btn btn-primary me-1"
-              to="/sizes/create"
+              to="/suppliers/create"
               role="button"
             >
-              Thêm kích thước
+              Thêm nhà cung cấp
             </Link>
             <Button variant="outline-primary" onClick={handleRefresh}>
               Refresh
@@ -90,28 +88,32 @@ export default function SizeList() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Kích thước</th>
+              <th>Nhà cung cấp</th>
+              <th>Số điện thoại</th>
+              <th>Địa chỉ</th>
               <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            {sizes &&
-              sizes.length > 0 &&
-              sizes.map((size, index) => (
-                <tr key={size.id}>
+            {suppliers &&
+              suppliers.length > 0 &&
+              suppliers.map((supplier, index) => (
+                <tr key={supplier.id}>
                   <td>{index + 1}</td>
-                  <td>{size.name}</td>
+                  <td>{supplier?.name}</td>
+                  <td>{supplier?.phone_number}</td>
+                  <td>{supplier?.address}</td>
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>
                     <Link
                       className="btn btn-success btn-sm me-1"
-                      to={`/sizes/${size.id}`}
+                      to={`/suppliers/${supplier.id}`}
                     >
                       Chỉnh sửa
                     </Link>
                     <button
                       className="btn btn-danger ms-2"
                       onClick={() => {
-                        setSizeId(size.id);
+                        setSupplierId(supplier.id);
                         setShowConfirmModal(true);
                       }}
                     >

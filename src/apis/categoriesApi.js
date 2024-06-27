@@ -1,7 +1,7 @@
 import http from "../configs/http";
 
 const categoriesApi = {
-  getAllCategories: (page = 0, limit = 10) => {
+  getAllCategories: (page = 1, limit = 10) => {
     return http.get(`categories?page=${page}&limit=${limit}`);
   },
   getCategoryById: (id) => http.get(`categories/${id}`),

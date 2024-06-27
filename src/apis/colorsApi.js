@@ -1,7 +1,7 @@
 import http from "../configs/http";
 
 const colorsApi = {
-  getAllColors: (page = 0, limit = 5) => {
+  getAllColors: (page = 1, limit = 5) => {
     return http.get(`colors?page=${page}&limit=${limit}`);
   },
   getColorById: (id) => http.get(`colors/${id}`),

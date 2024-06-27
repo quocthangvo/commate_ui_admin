@@ -16,6 +16,7 @@ export default function UpdateProduct() {
   const [messageError, setMessageError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState();
   const [currentCategoryId, setCurrentCategoryId] = useState();
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const {
     register,
@@ -42,19 +43,28 @@ export default function UpdateProduct() {
     setSelectedCategory(product.category_id);
   }, [product, setValue]);
 
-  const onSubmit = handleSubmit((data) => {
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    setSelectedImage(file);
+  };
+
+  const onSubmit = handleSubmit(async (data) => {
+    const formData = new FormData();
+    if (selectedImage) {
+      formData.append("image", selectedImage); // Append selected image file to FormData
+    }
+
     data.category_id = selectedCategory || currentCategoryId;
-    productsApi
-      .updateProduct(productId, data)
-      .then((response) => {
-        if (response.status === 200) {
-          toast(response.data.message);
-          navigate(-1);
-        }
-      })
-      .catch((error) => {
-        setMessageError(error.response.data.message);
-      });
+
+    try {
+      const response = await productsApi.updateProduct(productId, formData);
+      if (response.status === 200) {
+        toast.success(response.data.message);
+        navigate(-1); // Navigate back to previous page
+      }
+    } catch (error) {
+      setMessageError(error.response.data.message);
+    }
   });
 
   const handleSelectedCategory = (e) => {
@@ -101,6 +111,18 @@ export default function UpdateProduct() {
             />
 
             <div className="invalid-feedback">{errors.name?.message}</div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="image" className="form-label">
+              Hình ảnh
+            </label>
+            <input
+              {...register("image")}
+              type="file"
+              className="form-control"
+              onChange={handleImageChange} // Handle file selection
+            />
           </div>
 
           <div className=" mt-4 ">

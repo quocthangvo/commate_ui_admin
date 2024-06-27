@@ -7,11 +7,10 @@ const Account = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here, e.g., update user info
+
     console.log("Phone Number:", phoneNumber);
     console.log("Password:", password);
-    // You can send this data to the backend to update user info
-    // Reset fields after submission if needed
+
     setPhoneNumber("");
     setPassword("");
   };
@@ -33,6 +32,16 @@ const Account = () => {
             </Form.Group>
 
             <Form.Group controlId="formPassword">
+              <Form.Label>Mật khẩu cũ</Form.Label>
+              <Form.Control
+                type="password"
+                placeholder="Nhập mật khẩu "
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group controlId="formNewPassword">
               <Form.Label>Mật khẩu mới</Form.Label>
               <Form.Control
                 type="password"

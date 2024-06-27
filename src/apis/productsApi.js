@@ -10,6 +10,7 @@ const productsApi = {
   deleteProduct: (id) => http.delete(`products/delete/${id}`),
   searchProduct: (name) => http.get(`products/search?name=${name}`),
   findByCategoryId: (id) => http.get(`products/category/${id}`),
+  uploadImage: (id, fromData) => http.post(`products/uploads/${id}`, fromData),
 };
 
 export default productsApi;
