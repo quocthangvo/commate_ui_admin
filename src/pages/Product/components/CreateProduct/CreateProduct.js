@@ -42,13 +42,21 @@ export default function CreateProduct() {
     });
   }, []);
 
+  const handleSizeChange = (select) => {
+    setSelectedSizes(select);
+    console.log(select);
+  };
+
+  const handleColorChange = (select) => {
+    setSelectedColors(select);
+    console.log(select);
+  };
   const onSubmit = handleSubmit((data) => {
     const productData = {
       ...data,
       sizes: selectedSizes.map((size) => size.value),
       colors: selectedColors.map((color) => color.value),
     };
-
     productsApi
       .createProduct(productData)
       .then((response) => {
@@ -62,13 +70,7 @@ export default function CreateProduct() {
       });
   });
 
-  const handleSizeChange = (selected) => {
-    setSelectedSizes(selected);
-  };
-
-  const handleColorChange = (selected) => {
-    setSelectedColors(selected);
-  };
+  console.log(errors);
 
   return (
     <div className="container">
@@ -98,7 +100,7 @@ export default function CreateProduct() {
               />
               <div className="invalid-feedback">{errors.name?.message}</div>
             </div>
-
+            {/* 
             <div className="form-group">
               <label htmlFor="image" className="form-label">
                 Hình ảnh
@@ -108,7 +110,7 @@ export default function CreateProduct() {
                 type="file"
                 className="form-control"
               />
-            </div>
+            </div> */}
 
             <div className="form-group">
               <label htmlFor="description" className="form-label">
@@ -165,6 +167,7 @@ export default function CreateProduct() {
               </label>
               <MultiSelect
                 options={sizes.map((size) => ({
+                  key: size.id,
                   label: size.name,
                   value: size.id,
                 }))}
@@ -182,6 +185,7 @@ export default function CreateProduct() {
               </label>
               <MultiSelect
                 options={colors.map((color) => ({
+                  key: color.id,
                   label: color.name,
                   value: color.id,
                 }))}
