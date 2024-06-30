@@ -21,6 +21,8 @@ export default function CreateProduct() {
   const [messageError, setMessageError] = useState("");
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
+  const [images, setImages] = useState([]);
+  // const [productId, setProductId] = useState(null); //state lưu productid
 
   const {
     register,
@@ -51,6 +53,20 @@ export default function CreateProduct() {
     setSelectedColors(select);
     console.log(select);
   };
+
+  const onFileUploadImage = (e) => {
+    setImages(e.target.files);
+    console.log(e.target.files);
+  };
+
+  const insertImage = () => {
+    return [...images].map((image, index) => (
+      <div key={index} className="image-item mt-5">
+        <img src={URL.createObjectURL(image)} alt="" />
+      </div>
+    ));
+  };
+
   const onSubmit = handleSubmit((data) => {
     const productData = {
       ...data,
@@ -61,14 +77,38 @@ export default function CreateProduct() {
       .createProduct(productData)
       .then((response) => {
         if (response.status === 200) {
-          toast(response.data.message);
-          navigate(-1);
+          const id = response.data.data.id;
+          handleUploadImages(id);
+          console.log(id);
         }
       })
       .catch((error) => {
         setMessageError(error.response.data.message);
       });
   });
+
+  const handleUploadImages = (id) => {
+    const formData = new FormData();
+    for (let i = 0; i < images.length; i++) {
+      formData.append("files", images[i]);
+    }
+
+    productsApi
+      .uploadImages(id, formData)
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success(response.data.message);
+          navigate(-1); // Redirect after successful image upload
+        }
+      })
+      .catch((error) => {
+        if (error.response) {
+          setMessageError(error.response.data.message);
+        } else {
+          setMessageError("Đã xảy ra lỗi khi gửi yêu cầu.");
+        }
+      });
+  };
 
   console.log(errors);
 
@@ -100,17 +140,6 @@ export default function CreateProduct() {
               />
               <div className="invalid-feedback">{errors.name?.message}</div>
             </div>
-            {/* 
-            <div className="form-group">
-              <label htmlFor="image" className="form-label">
-                Hình ảnh
-              </label>
-              <input
-                {...register("image")}
-                type="file"
-                className="form-control"
-              />
-            </div> */}
 
             <div className="form-group">
               <label htmlFor="description" className="form-label">
@@ -195,6 +224,26 @@ export default function CreateProduct() {
                 // className={` ${errors.colors ? "is-invalid" : ""}`}
               />
               <div className="invalid-feedback">{errors.colors?.message}</div>
+            </div>
+          </form>
+
+          <form
+            className="form-container mt-5 justify-content-start"
+            style={{ height: "300px", maxHeight: "300px", overflowY: "auto" }}
+          >
+            <h2 className="form-header">Cập nhật ảnh</h2>
+            <div className="form-group">
+              <label className="form-label" htmlFor="sizes">
+                Hình ảnh
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={onFileUploadImage}
+                className="form-control"
+              />
+              <div className="image-grid">{insertImage()}</div>
             </div>
           </form>
         </div>

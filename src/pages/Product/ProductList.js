@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Alert, Button, Table } from "react-bootstrap";
 import productsApi from "../../apis/productsApi";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -11,6 +11,8 @@ import { useForm } from "react-hook-form";
 import categoriesApi from "../../apis/categoriesApi";
 
 export default function ProductList() {
+  const location = useLocation();
+
   const [products, setProducts] = useState([]);
   const [productId, setProductId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -26,18 +28,41 @@ export default function ProductList() {
   } = useForm();
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get("search") || "";
+    const categoryParam = params.get("category") || "";
+    setSearchValue(searchParam);
+    setCategoryId(categoryParam);
+    fetchProducts(searchParam, categoryParam); // Fetch products based on initial URL params
+    fetchCategories();
+  }, [location.search]);
 
-  const fetchProducts = () => {
-    productsApi
-      .getAllProducts()
-      .then((response) => {
-        setProducts(response.data.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+  const fetchProducts = (search = "", category = "") => {
+    // Fetch products based on search and category params
+    if (search !== "" || category !== "") {
+      if (search !== "") {
+        searchProduct(search);
+      } else {
+        findByCategoryId(category);
+      }
+    } else {
+      // Fetch all products if no params are provided
+      productsApi
+        .getAllProducts()
+        .then((response) => {
+          setProducts(response.data.data);
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  };
+
+  const fetchCategories = () => {
+    categoriesApi.getAllCategories().then((response) => {
+      setCategories(response.data.data);
+    });
   };
 
   const handleDelete = () => {
@@ -45,7 +70,7 @@ export default function ProductList() {
       .deleteProduct(productId)
       .then((response) => {
         if (response.status === 200) {
-          fetchProducts();
+          fetchProducts(searchValue, categoryId); // Re-fetch products after deletion
           toast.success(response.data.message);
         } else {
           showErrorMessage("Không thể xóa");
@@ -61,6 +86,9 @@ export default function ProductList() {
   };
 
   const searchProduct = (name) => {
+    const params = new URLSearchParams();
+    params.append("search", name);
+    window.history.replaceState(null, null, `?${params.toString()}`);
     productsApi
       .searchProduct(name)
       .then((response) => {
@@ -73,13 +101,10 @@ export default function ProductList() {
       });
   };
 
-  useEffect(() => {
-    categoriesApi.getAllCategories().then((response) => {
-      setCategories(response.data.data);
-    });
-  }, []);
-
   const findByCategoryId = (categoryId) => {
+    const params = new URLSearchParams();
+    params.append("category", categoryId);
+    window.history.replaceState(null, null, `?${params.toString()}`);
     productsApi
       .findByCategoryId(categoryId)
       .then((response) => {
@@ -99,11 +124,14 @@ export default function ProductList() {
   const handleCategoryChange = (event) => {
     const selectedCategoryId = event.target.value;
     setCategoryId(selectedCategoryId); // Ensure this is a scalar value
+    const params = new URLSearchParams();
     if (selectedCategoryId !== "") {
-      findByCategoryId(selectedCategoryId);
+      params.append("category", selectedCategoryId);
     } else {
-      setProducts([]);
+      params.delete("category");
     }
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    fetchProducts(searchValue, selectedCategoryId);
   };
 
   const showErrorMessage = (message) => {
@@ -122,6 +150,8 @@ export default function ProductList() {
   const clearFilter = () => {
     setSearchValue("");
     setCategoryId(""); // Clear categoryId filter
+    const params = new URLSearchParams();
+    window.history.replaceState(null, null, `?${params.toString()}`);
     fetchProducts(); // Fetch all products again
   };
 
@@ -221,7 +251,8 @@ export default function ProductList() {
                   <td>{index + 1}</td>
                   <td>
                     <img
-                      src="https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg"
+                      src={`/uploads/${product.productImages[0]?.image_url}`}
+                      // src={product.productImages[0]?.imageUrl}
                       style={{ width: "50px", height: "50px" }}
                       alt="images"
                     />
@@ -261,3 +292,17 @@ export default function ProductList() {
     </div>
   );
 }
+
+// const multer = require("multer");
+
+// const storage = multer.diskStorage({
+//   destination: (req, file, callback) => {
+//     callback(null, ".public/uploads");
+//   },
+//   filename: (req, file, callback) => {
+//     callback(null, file.oringinalname);
+//   },
+// });
+// const uploadFile = multer({ storage: storage });
+
+// module.exports = uploadFile;

@@ -71,7 +71,7 @@ export default function SideBar() {
         <div className="sidebar-heading">Đơn hàng</div>
 
         <li className="nav-item active">
-          <Link className="nav-link m-3" to="/products/uploads/:id">
+          <Link className="nav-link m-3" to="/purchaseOrders">
             <span>Đơn đặt hàng</span>
           </Link>
           <div

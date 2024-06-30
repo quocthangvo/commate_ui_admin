@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Alert, Button, Table } from "react-bootstrap";
+import { Alert, Button, Table, FormCheck } from "react-bootstrap";
 import productDetailsApi from "../../apis/productDetailsApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
@@ -11,15 +11,16 @@ import ConfirmModal from "../../components/ConfirmModal";
 export default function ProductDetailList() {
   const navigate = useNavigate();
   const { id: productId } = useParams();
-  const [productDetails, setProductDetails] = useState([]); // lưu sp
-  const [productDetailId, setProductDetailId] = useState([]);
+  const [productDetails, setProductDetails] = useState([]);
+
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
 
   const { setValue } = useForm();
 
-  const fetchProductDetails = () => {
+  const fetchProductDetails = useCallback(() => {
     productDetailsApi
       .getByProductId(productId)
       .then((response) => {
@@ -28,14 +29,14 @@ export default function ProductDetailList() {
       .catch((error) => {
         console.log(error);
       });
-  };
+  }, [productId]);
+
   useEffect(() => {
-    fetchProductDetails(); // dùng để trả load lại trang khi thực hiện hđ
-  }, []);
+    fetchProductDetails();
+  }, [fetchProductDetails]);
 
   useEffect(() => {
     if (productDetails.length > 0) {
-      //detail > id 0, thiết lập các trường
       setValue("name", productDetails[0]?.product?.name || "");
       setValue("size", productDetails[0]?.size?.name);
       setValue("color", productDetails[0]?.color?.name);
@@ -43,12 +44,20 @@ export default function ProductDetailList() {
   }, [productDetails, setValue]);
 
   const handleDelete = () => {
-    productDetailsApi
-      .deleteProductDetail(productDetailId)
-      .then((response) => {
-        if (response.status === 200) {
-          toast.success(response.data.message);
-          fetchProductDetails();
+    Promise.all(
+      selectedProductIds.map((id) => productDetailsApi.deleteProductDetail(id))
+    )
+      .then((responses) => {
+        const allSuccessful = responses.every(
+          (response) => response.status === 200
+        );
+        if (allSuccessful) {
+          setProductDetails((prevDetails) =>
+            prevDetails.filter(
+              (detail) => !selectedProductIds.includes(detail.id) // xóa sp cuối trả về rỗng
+            )
+          );
+          toast.success("Selected products deleted successfully.");
         }
       })
       .catch((error) => {
@@ -56,26 +65,48 @@ export default function ProductDetailList() {
       })
       .finally(() => {
         setShowConfirmModal(false);
-        setProductDetailId(null);
+        setSelectedProductIds([]);
       });
   };
+
   const showErrorMessage = (message) => {
     setErrorMessage(message);
     setShowError(true);
     setTimeout(() => {
       setShowError(false);
       setErrorMessage("");
-    }, 3000); // 3 giây
+    }, 3000);
   };
+
   const handleRefresh = () => {
     window.location.reload();
+  };
+
+  const toggleSelectProduct = (productId) => {
+    setSelectedProductIds(
+      (prevSelected) =>
+        prevSelected.includes(productId)
+          ? prevSelected.filter((id) => id !== productId)
+          : [...prevSelected, productId]
+      //chọn xóa theo id
+    );
+  };
+
+  const toggleSelectAllProducts = () => {
+    setSelectedProductIds(
+      (prevSelected) =>
+        prevSelected.length === productDetails.length
+          ? []
+          : productDetails.map((product) => product.id)
+      //chọn xóa all
+    );
   };
 
   return (
     <div>
       <ConfirmModal
         title="Confirm Delete"
-        content="Bạn có muốn xóa không?"
+        content="Bạn có muốn xóa các sản phẩm đã chọn không?"
         onClick={handleDelete}
         show={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -94,22 +125,37 @@ export default function ProductDetailList() {
             </Button>
           </div>
         </div>
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Tên sản phẩm</th>
-              <th>Hình ảnh</th>
-              <th>Màu sắc</th>
-              <th>Kích thước</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productDetails &&
-              productDetails.length > 0 &&
-              productDetails.map((productDetail, index) => (
+        {productDetails.length === 0 ? (
+          <p className="text-center">Không có chi tiết sản phẩm nào.</p>
+        ) : (
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>
+                  <FormCheck
+                    checked={
+                      selectedProductIds.length === productDetails.length
+                    }
+                    onChange={toggleSelectAllProducts}
+                  />
+                </th>
+                <th>ID</th>
+                <th>Tên sản phẩm</th>
+                <th>Hình ảnh</th>
+                <th>Màu sắc</th>
+                <th>Kích thước</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productDetails.map((productDetail, index) => (
                 <tr key={productDetail.id}>
+                  <td>
+                    <FormCheck
+                      checked={selectedProductIds.includes(productDetail.id)}
+                      onChange={() => toggleSelectProduct(productDetail.id)}
+                    />
+                  </td>
                   <td>{index + 1}</td>
                   <td>{productDetail.product.name}</td>
                   <td>
@@ -128,22 +174,21 @@ export default function ProductDetailList() {
                     >
                       Chỉnh sửa
                     </Link>
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      onClick={() => {
-                        setProductDetailId(productDetail.id);
-                        setShowConfirmModal(true);
-                      }}
-                      showErrorMessage
-                    >
-                      Xóa
-                    </button>
                   </td>
                 </tr>
               ))}
-          </tbody>
-        </Table>
+            </tbody>
+          </Table>
+        )}
+        {selectedProductIds.length > 0 && (
+          <Button
+            variant="danger"
+            className="mt-3"
+            onClick={() => setShowConfirmModal(true)}
+          >
+            Xóa các sản phẩm đã chọn
+          </Button>
+        )}
       </div>
     </div>
   );

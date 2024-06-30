@@ -1,0 +1,30 @@
+.product-quantity {
+    display: flex;
+    align-items: center;
+    width: 120px;
+  }
+  
+  .quantity-button {
+    border: none;
+    cursor: pointer; 
+    font-size: 16px; 
+    padding: 8px 12px; 
+    margin: 0 4px; 
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s; /* Hiệu ứng chuyển đổi */
+  }
+  
+  .quantity-field {
+    width: 50px; 
+    text-align: center; 
+    border:none;
+    border-bottom: 2px solid #ccc; 
+    padding: 2px; 
+    background-color: transparent; 
+    outline: none; 
+  }
+  
+
+  
+
+
+  

@@ -1,23 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { Alert, Button, Table } from "react-bootstrap";
+
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
-import suppliersApi from "../../apis/suppliersApi";
+import purchaseOrdersApi from "../../apis/purchaseOrders";
 
-export default function SupplierList() {
-  const [suppliers, setSuppliers] = useState([]);
-  const [supplierId, setSupplierId] = useState(null);
+export default function PurchaseOrderList() {
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [purchaseOrderId, setPurchaseOrderId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
 
-  const fetchSuppliers = () => {
-    suppliersApi
-      .getAllSuppliers()
+  const fetchPurchaseOrders = () => {
+    purchaseOrdersApi
+      .getAllPurchaseOrders()
       .then((response) => {
-        setSuppliers(response.data.data);
+        setPurchaseOrders(response.data.data);
       })
       .catch((error) => {
         console.log(error);
@@ -25,16 +25,18 @@ export default function SupplierList() {
   };
 
   useEffect(() => {
-    fetchSuppliers();
+    fetchPurchaseOrders();
   }, []);
 
   const handleDelete = () => {
-    suppliersApi
-      .deleteSupplier(supplierId)
+    purchaseOrdersApi
+      .deletePurchaseOrder(purchaseOrderId)
       .then((response) => {
         if (response.status === 200) {
           toast(response.data.message);
-          fetchSuppliers();
+          fetchPurchaseOrders();
+        } else {
+          showErrorMessage("Không thể xóa");
         }
       })
       .catch((error) => {
@@ -42,7 +44,7 @@ export default function SupplierList() {
       })
       .finally(() => {
         setShowConfirmModal(false);
-        setSupplierId(null);
+        setPurchaseOrderId(null);
       });
   };
 
@@ -58,26 +60,27 @@ export default function SupplierList() {
   const handleRefresh = () => {
     window.location.reload();
   };
+
   return (
     <div>
       <ConfirmModal
-        title="Xác nhận xóa"
+        title="Confirm Delete"
         content="Bạn có muốn xóa không?"
         onClick={handleDelete}
         show={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
       />
       <div className="container my-4">
-        <h2 className="text-center mb-4">Nhà cung cấp</h2>
+        <h2 className="text-center mb-4">Purchase Orders</h2>
         {showError && <Alert variant="danger">{errorMessage}</Alert>}
         <div className="row mb-3">
           <div className="col">
             <Link
               className="btn btn-primary me-1"
-              to="/suppliers/create"
+              to="/purchaseOrders/create"
               role="button"
             >
-              Thêm nhà cung cấp
+              Đặt đơn hàng
             </Link>
             <Button variant="outline-primary" onClick={handleRefresh}>
               Refresh
@@ -88,32 +91,36 @@ export default function SupplierList() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Mã đơn hàng</th>
+              <th>Ngày đặt hàng</th>
+              <th>Ngày dự kiến giao</th>
+              <th>Trạng thái</th>
               <th>Nhà cung cấp</th>
-              <th>Số điện thoại</th>
-              <th>Địa chỉ</th>
               <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            {suppliers &&
-              suppliers.length > 0 &&
-              suppliers.map((supplier, index) => (
-                <tr key={supplier.id}>
+            {purchaseOrders &&
+              purchaseOrders.length > 0 &&
+              purchaseOrders.map((purchaseOrder, index) => (
+                <tr key={purchaseOrder.id}>
                   <td>{index + 1}</td>
-                  <td>{supplier?.name}</td>
-                  <td>{supplier?.phoneNumber}</td>
-                  <td>{supplier?.address}</td>
+                  <td>{purchaseOrder.code}</td>
+                  <td>{purchaseOrder.orderDate}</td>
+                  <td>{purchaseOrder.shippingDate}</td>
+                  <td>{purchaseOrder.status}</td>
+                  <td>{purchaseOrder.supplier_name}</td>
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>
                     <Link
                       className="btn btn-success btn-sm me-1"
-                      to={`/suppliers/${supplier.id}`}
+                      to={`/purchase-orders/${purchaseOrder.id}`}
                     >
                       Chỉnh sửa
                     </Link>
                     <button
                       className="btn btn-danger ms-2"
                       onClick={() => {
-                        setSupplierId(supplier.id);
+                        setPurchaseOrderId(purchaseOrder.id);
                         setShowConfirmModal(true);
                       }}
                     >

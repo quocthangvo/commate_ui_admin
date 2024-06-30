@@ -10,7 +10,13 @@ const productsApi = {
   deleteProduct: (id) => http.delete(`products/delete/${id}`),
   searchProduct: (name) => http.get(`products/search?name=${name}`),
   findByCategoryId: (id) => http.get(`products/category/${id}`),
-  uploadImage: (id) => http.post(`products/uploads/${id}`),
+  uploadImages: (id, formData) =>
+    http.post(`products/uploads/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+  getImageByProductId: (id) => http.get(`products/images/${id}`),
 };
 
 export default productsApi;

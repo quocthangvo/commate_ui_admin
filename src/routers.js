@@ -23,7 +23,8 @@ import UpdateUser from "./pages/User/components/UpdateUser/UpdateUser";
 import SupplierList from "./pages/Supplier/SupplierList";
 import CreateSupplier from "./pages/Supplier/components/CreateSupplier";
 import UpdateSupplier from "./pages/Supplier/components/UpdateSupplier";
-import UploadImage from "./pages/Product/components/UploadImage";
+import PurchaseOrderList from "./pages/PurchaseOrder/PurchaseOrderList";
+import CreatePurchaseOrder from "./pages/PurchaseOrder/components/UpdatePurchaseOrder/CreatePurchseOrder";
 
 export default function useRouterElement() {
   return useRoutes([
@@ -63,14 +64,7 @@ export default function useRouterElement() {
         </MainLayout>
       ),
     },
-    {
-      path: "/products/uploads/:id",
-      element: (
-        <MainLayout>
-          <UploadImage />
-        </MainLayout>
-      ),
-    },
+
     {
       path: "/categories",
       element: (
@@ -216,10 +210,18 @@ export default function useRouterElement() {
       ),
     },
     {
-      path: "/products/upload/:id",
+      path: "/purchaseOrders",
       element: (
         <MainLayout>
-          <UploadImage />
+          <PurchaseOrderList />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/purchaseOrders/create",
+      element: (
+        <MainLayout>
+          <CreatePurchaseOrder />
         </MainLayout>
       ),
     },
