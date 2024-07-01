@@ -1,60 +1,68 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowLeft,
+  faFilter,
+  faSearch,
+  faShoppingCart,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { yupResolver } from "@hookform/resolvers/yup";
 import purchaseOrdersApi from "../../../../apis/purchaseOrders";
 import suppliersApi from "../../../../apis/suppliersApi";
-import "../../../../css/CreateProduct.css";
+import productDetailsApi from "../../../../apis/productDetailsApi";
 import { purchaseOrderSchema } from "../../../../validations/purchaseOrderSchema";
 import { FormCheck, Table } from "react-bootstrap";
-import productDetailsApi from "../../../../apis/productDetailsApi";
+import "../../../../css/CreateProduct.css";
 import "../../../../css/PurchaseOrder.css";
 
 export default function CreatePurchaseOrder() {
   const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState([]);
-
   const [messageError, setMessageError] = useState("");
-
   const [productDetails, setProductDetails] = useState([]);
-
   const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]); // State to store selected products
+  const [searchValue, setSearchValue] = useState("");
+  const [quantityMap, setQuantityMap] = useState({}); // State to store quantity for each product
+  const [showSearchResults, setShowSearchResults] = useState(false); // State to control displaying search results
 
-  const fetchProductDetails = useCallback(() => {
-    productDetailsApi
-      .getAllProductDetails()
-      .then((response) => {
-        setProductDetails(response.data.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+  const location = useLocation();
+
+  const fetchProductDetails = useCallback((search = "") => {
+    if (search !== "") {
+      searchProduct(search);
+    } else {
+      productDetailsApi
+        .getAllProductDetails()
+        .then((response) => {
+          setProductDetails(response.data.data);
+          setShowSearchResults(false); // Reset to show full product list
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
   }, []);
 
   useEffect(() => {
     fetchProductDetails();
   }, [fetchProductDetails]);
 
-  const toggleSelectProduct = (productId) => {
-    setSelectedProductIds(
-      (prevSelected) =>
-        prevSelected.includes(productId)
-          ? prevSelected.filter((id) => id !== productId)
-          : [...prevSelected, productId]
-      //chọn xóa theo id
+  const toggleSelectProduct = (product) => {
+    setSelectedProductIds((prevSelected) =>
+      prevSelected.includes(product.id)
+        ? prevSelected.filter((id) => id !== product.id)
+        : [...prevSelected, product.id]
     );
-  };
-
-  const toggleSelectAllProducts = () => {
-    setSelectedProductIds(
-      (prevSelected) =>
-        prevSelected.length === productDetails.length
-          ? []
-          : productDetails.map((product) => product.id)
-      //chọn xóa all
+    setSelectedProducts((prevSelected) =>
+      prevSelected.find((p) => p.id === product.id)
+        ? prevSelected.filter((p) => p.id !== product.id)
+        : [...prevSelected, product]
     );
   };
 
@@ -75,7 +83,19 @@ export default function CreatePurchaseOrder() {
     });
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get("search") || "";
+    setSearchValue(searchParam);
+    fetchProductDetails(searchParam); // Fetch products based on initial URL params
+  }, [location.search, fetchProductDetails]); // Include fetchProductDetails here
+
   const onSubmit = handleSubmit((data) => {
+    data.products = selectedProducts.map((product) => ({
+      product_id: product.id,
+      quantity: quantityMap[product.id] || 1,
+    }));
+
     purchaseOrdersApi
       .createPurchaseOrder(data)
       .then((response) => {
@@ -89,124 +109,250 @@ export default function CreatePurchaseOrder() {
       });
   });
 
-  const [quantity, setQuantity] = useState(1); // Giá trị mặc định là 1
-
-  // Hàm xử lý khi thay đổi số lượng từ input
-  const handleQuantityChange = (event) => {
-    const newQuantity = parseInt(event.target.value, 10); // Lấy giá trị nhập vào và chuyển thành số nguyên
-    setQuantity(newQuantity);
+  const searchProduct = (name) => {
+    const params = new URLSearchParams();
+    params.append("search", name);
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    productDetailsApi
+      .searchProductDetail(name)
+      .then((response) => {
+        if (response.status === 200) {
+          setProductDetails(response.data);
+          setShowSearchResults(true); // Show search results
+        }
+      })
+      .catch((error) => {
+        setMessageError(error.response.data.message);
+      });
   };
 
-  // Hàm xử lý khi nhấn nút cộng số lượng
-  const incrementQuantity = () => {
-    setQuantity((prevQuantity) => prevQuantity + 1);
+  const clearFilter = () => {
+    setSearchValue("");
+    const params = new URLSearchParams();
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    fetchProductDetails(); // Fetch all products again
+    setShowSearchResults(false); // Reset to show full product list
   };
 
-  // Hàm xử lý khi nhấn nút trừ số lượng
-  const decrementQuantity = () => {
-    if (quantity > 0) {
-      setQuantity((prevQuantity) => prevQuantity - 1);
+  const handleQuantityChange = (productId, newQuantity) => {
+    setQuantityMap((prevMap) => ({
+      ...prevMap,
+      [productId]: newQuantity,
+    }));
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      searchProduct(searchValue);
     }
   };
+
+  const removeSelectedProduct = (productId) => {
+    setSelectedProductIds((prevSelected) =>
+      prevSelected.filter((id) => id !== productId)
+    );
+    setSelectedProducts((prevSelected) =>
+      prevSelected.filter((p) => p.id !== productId)
+    );
+  };
+
   return (
     <div>
-      <Link className="btn btn-link " onClick={() => navigate(-1)}>
-        <FontAwesomeIcon icon={faArrowLeft} className="icon-size " />
+      <Link className="btn btn-link" onClick={() => navigate(-1)}>
+        <FontAwesomeIcon icon={faArrowLeft} className="icon-size" />
       </Link>
-      <div className="row">
-        <div className="col-md-6">
-          <form className="form-container" onSubmit={onSubmit}>
-            <h2 className="form-header">Đặt đơn hàng</h2>
-            {messageError && (
-              <div className="alert alert-danger" role="alert">
-                {messageError}
-              </div>
-            )}
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="supplier_id">
-                Nhà cung cấp:
-              </label>
-              <select
-                {...register("supplier_id")}
-                className={`form-select ${
-                  errors.supplier_id ? "is-invalid" : ""
-                }`}
-              >
-                <option value="">-- Chọn nhà cung cấp --</option>
-                {suppliers.length > 0 &&
-                  suppliers.map((supplier) => (
-                    <option key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </option>
-                  ))}
-              </select>
-              <div className="invalid-feedback">
-                {errors.supplier_id?.message}
-              </div>
+      <div className="">
+        <form className="form-container" onSubmit={onSubmit}>
+          <h2 className="form-header">Đặt đơn hàng</h2>
+          {messageError && (
+            <div className="alert alert-danger" role="alert">
+              {messageError}
             </div>
+          )}
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="role_id">
-                Người đặt hàng:
-              </label>
-              <input
-                {...register("role_id")}
-                className="form-input"
-                value="Admin"
-                defaultValue="2"
-                disabled
-              />
-              <div className="invalid-feedback">{errors.role_id?.message}</div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="supplier_id">
+              Nhà cung cấp:
+            </label>
+            <select
+              {...register("supplier_id")}
+              className={`form-select ${
+                errors.supplier_id ? "is-invalid" : ""
+              }`}
+            >
+              <option value="">-- Chọn nhà cung cấp --</option>
+              {suppliers.length > 0 &&
+                suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
+            </select>
+            <div className="invalid-feedback">
+              {errors.supplier_id?.message}
             </div>
+          </div>
 
-            <div className="text-end mt-5">
-              <button
-                type="button"
-                className="btn btn-secondary px-4 me-2"
-                onClick={() => navigate(-1)}
-              >
-                Hủy
-              </button>
-              <button type="submit" className="btn btn-primary  px-5">
-                Lưu
-              </button>
-            </div>
-          </form>
+          <div className="form-group">
+            <label className="form-label" htmlFor="note">
+              Ghi chú:
+            </label>
+            <textarea
+              {...register("note")}
+              className="form-input"
+              style={{ height: "100px" }}
+            />
+            <div className="invalid-feedback">{errors.note?.message}</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="role_id">
+              Người đặt hàng:
+            </label>
+            <input
+              {...register("role_id")}
+              className="form-input"
+              value="Admin"
+              defaultValue="2"
+              disabled
+            />
+            <div className="invalid-feedback">{errors.role_id?.message}</div>
+          </div>
+
+          <div className="form-group">
+            <h3 className="form-header">Sản phẩm đã chọn</h3>
+            <Table bordered hover>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên sản phẩm</th>
+                  <th>Hình ảnh</th>
+                  <th>Màu sắc</th>
+                  <th>Kích thước</th>
+                  <th>Đơn giá</th>
+                  <th>Số lượng</th>
+                  <th>Thành tiền</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedProducts.map((product, index) => (
+                  <tr key={product.id}>
+                    <td>{index + 1}</td>
+                    <td>{product.product?.name}</td>
+                    <td>
+                      <img
+                        src={product.product?.image}
+                        alt="images"
+                        style={{ maxWidth: "100px", maxHeight: "100px" }}
+                      />
+                    </td>
+                    <td>{product.color.name}</td>
+                    <td>{product.size.name}</td>
+                    <td>100.000</td>
+                    <td>
+                      <input
+                        type="number"
+                        className="quantity-field"
+                        value={quantityMap[product.id] || 1}
+                        onChange={(e) =>
+                          handleQuantityChange(
+                            product.id,
+                            parseInt(e.target.value, 10)
+                          )
+                        }
+                        min="1"
+                      />
+                    </td>
+                    <td>{(quantityMap[product.id] || 1) * 100000}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={() => removeSelectedProduct(product.id)}
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+
+          <div className="text-end">
+            <button
+              type="button"
+              className="btn btn-secondary px-4 me-2"
+              onClick={() => navigate(-1)}
+            >
+              Hủy
+            </button>
+            <button type="submit" className="btn btn-primary">
+              <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
+              Đặt hàng
+            </button>
+          </div>
+        </form>
+      </div>
+      <div className="">
+        <h3 className="text-center mt-5">Chi tiết sản phẩm</h3>
+        <div className="d-flex">
+          <div className="input-gr search-input-container">
+            <input
+              type="text"
+              className="form-control border-1 search-input"
+              placeholder="Tìm kiếm..."
+              value={searchValue}
+              onKeyPress={handleKeyPress}
+              onChange={(e) => setSearchValue(e.target.value)}
+              aria-label="Search"
+              aria-describedby="basic-addon2"
+            />
+            <button
+              className="btn search-btn"
+              type="button"
+              onClick={() => searchProduct(searchValue)}
+            >
+              <FontAwesomeIcon icon={faSearch} />
+            </button>
+          </div>
+
+          <div className="form-gr">
+            <button
+              className="btn border-black"
+              type="button"
+              onClick={clearFilter}
+            >
+              <FontAwesomeIcon icon={faFilter} /> Xóa bộ lọc
+            </button>
+          </div>
         </div>
+        <Table bordered hover>
+          <thead>
+            <tr>
+              <th>
+                <FormCheck
+                  checked={selectedProductIds.length === productDetails.length}
+                />
+              </th>
+              <th>ID</th>
+              <th>Tên sản phẩm</th>
+              <th>Hình ảnh</th>
+              <th>Màu sắc</th>
+              <th>Kích thước</th>
 
-        <div className="col-md-6"></div>
-        <div className="">
-          <h3 className="text-center mt-5">Chi tiết sản phẩm</h3>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>
-                  <FormCheck
-                    checked={
-                      selectedProductIds.length === productDetails.length
-                    }
-                    onChange={toggleSelectAllProducts}
-                  />
-                </th>
-                <th>ID</th>
-                <th>Tên sản phẩm</th>
-                <th>Hình ảnh</th>
-                <th>Màu sắc</th>
-                <th>Kích thước</th>
-                <th>Đơn giá</th>
-                <th>Số lượng</th>
-                <th>Thành tiền</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          {showSearchResults && (
             <tbody>
               {productDetails.map((productDetail, index) => (
                 <tr key={productDetail.id}>
                   <td>
                     <FormCheck
                       checked={selectedProductIds.includes(productDetail.id)}
-                      onChange={() => toggleSelectProduct(productDetail.id)}
+                      onChange={() => toggleSelectProduct(productDetail)}
                     />
                   </td>
                   <td>{index + 1}</td>
@@ -220,37 +366,12 @@ export default function CreatePurchaseOrder() {
                   </td>
                   <td>{productDetail.color.name}</td>
                   <td>{productDetail.size.name}</td>
-                  <td>{productDetail.price?.name}</td>
-                  <td>
-                    <div className="product-quantity">
-                      <button
-                        className="quantity-button"
-                        onClick={decrementQuantity}
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        className="quantity-field"
-                        value={quantity}
-                        onChange={handleQuantityChange}
-                        min="0"
-                      />
-                      <button
-                        className="quantity-button"
-                        onClick={incrementQuantity}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </td>
-                  <td>{}</td>
-                  <td>X</td>
+                  <td>100.000</td>
                 </tr>
               ))}
             </tbody>
-          </Table>
-        </div>
+          )}
+        </Table>
       </div>
     </div>
   );
