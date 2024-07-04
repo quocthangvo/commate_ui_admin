@@ -9,6 +9,10 @@ const productDetailsApi = {
   deleteProductDetail: (id) => http.delete(`product_details/delete/${id}`),
   searchProductDetail: (name) =>
     http.get(`product_details/search?name=${name}`),
+  findBySizeId: (id) => http.get(`product_details/size/${id}`),
+  findByColorId: (id) => http.get(`product_details/color/${id}`),
+  findBySizeAndColorId: (sizeId, colorId) =>
+    http.get(`product_details/${sizeId}/${colorId}`),
 };
 
 export default productDetailsApi;

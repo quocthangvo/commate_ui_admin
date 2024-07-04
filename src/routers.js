@@ -24,7 +24,7 @@ import SupplierList from "./pages/Supplier/SupplierList";
 import CreateSupplier from "./pages/Supplier/components/CreateSupplier";
 import UpdateSupplier from "./pages/Supplier/components/UpdateSupplier";
 import PurchaseOrderList from "./pages/PurchaseOrder/PurchaseOrderList";
-import CreatePurchaseOrder from "./pages/PurchaseOrder/components/UpdatePurchaseOrder/CreatePurchseOrder";
+import CreatePurchaseOrder from "./pages/PurchaseOrder/components/CreatePurchaseOrder";
 
 export default function useRouterElement() {
   return useRoutes([
