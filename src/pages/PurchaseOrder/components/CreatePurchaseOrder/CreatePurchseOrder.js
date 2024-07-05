@@ -20,6 +20,7 @@ import "../../../../css/CreateProduct.css";
 import "../../../../css/PurchaseOrder.css";
 import sizesApi from "../../../../apis/sizesApi";
 import colorsApi from "../../../../apis/colorsApi";
+import purchaseOrderDetailsApi from "../../../../apis/purchaseOrderDetailsApi";
 
 export default function CreatePurchaseOrder() {
   const navigate = useNavigate();
@@ -274,22 +275,43 @@ export default function CreatePurchaseOrder() {
         setMessageError(error.response.data.message);
       });
   };
-  const onSubmit = handleSubmit((data) => {
-    data.products = selectedProducts.map((product) => ({
-      product_id: product.id,
-      quantity: quantityMap[product.id] || 1,
-    }));
 
+  const onSubmit = handleSubmit((data) => {
+    // Gửi yêu cầu tạo purchaseOrder
     purchaseOrdersApi
       .createPurchaseOrder(data)
       .then((response) => {
         if (response.status === 200) {
-          toast(response.data.message);
-          navigate(-1);
+          const purchaseOrderId = response.data.data.id;
+
+          // Tạo dữ liệu cho purchaseOrderDetail
+          const purchaseOrderDetailData = {
+            purchase_order_id: purchaseOrderId,
+            product_details: selectedProductIds, // Use selected product IDs
+            quantity: data.quantity,
+            price: data.price,
+            unit: data.unit,
+            is_active: data.is_active,
+          };
+
+          // Gửi yêu cầu tạo purchaseOrderDetail
+          return purchaseOrderDetailsApi.createPurchaseOrderDetail(
+            purchaseOrderDetailData
+          );
+        } else {
+          throw new Error("Failed to create purchase order");
+        }
+      })
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success("Đã tạo đơn hàng thành công");
+          navigate(-1); // Redirect after successful creation
+        } else {
+          throw new Error("Failed to create purchase order detail");
         }
       })
       .catch((error) => {
-        setMessageError(error.response.data.message);
+        setMessageError(error.message || "Đã xảy ra lỗi khi tạo đơn hàng");
       });
   });
 
@@ -388,7 +410,6 @@ export default function CreatePurchaseOrder() {
             />
             <div className="invalid-feedback">{errors.role_id?.message}</div>
           </div>
-
           <div className="form-group">
             <h3 className="form-header">Sản phẩm đã chọn</h3>
             <Table bordered hover>
@@ -399,6 +420,7 @@ export default function CreatePurchaseOrder() {
                   <th>Hình ảnh</th>
                   <th>Màu sắc</th>
                   <th>Kích thước</th>
+                  <th>Đơn vị</th>
                   <th>Đơn giá</th>
                   <th>Số lượng</th>
                   <th>Thành tiền</th>
@@ -417,14 +439,22 @@ export default function CreatePurchaseOrder() {
                         style={{ maxWidth: "100px", maxHeight: "100px" }}
                       />
                     </td>
-                    <td>{product.color.name}</td>
-                    <td>{product.size.name}</td>
+                    <td>{product.color?.name}</td>
+                    <td>{product.size?.name}</td>
+                    <td>
+                      <input
+                        {...register("unit")}
+                        type="text"
+                        className="form-control"
+                      />
+                    </td>
                     <td>100.000</td>
                     <td>
                       <input
                         type="number"
                         className="quantity-field"
                         value={quantityMap[product.id] || 1}
+                        {...register("quantity")}
                         onChange={(e) =>
                           handleQuantityChange(
                             product.id,
@@ -449,7 +479,6 @@ export default function CreatePurchaseOrder() {
               </tbody>
             </Table>
           </div>
-
           <div className="text-end">
             <button
               type="button"
@@ -460,7 +489,7 @@ export default function CreatePurchaseOrder() {
             </button>
             <button type="submit" className="btn btn-primary">
               <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
-              Đặt hàng
+              Tạo đơn đặt hàng
             </button>
           </div>
         </form>
@@ -547,7 +576,6 @@ export default function CreatePurchaseOrder() {
               <th>Hình ảnh</th>
               <th>Màu sắc</th>
               <th>Kích thước</th>
-
               <th>Thành tiền</th>
             </tr>
           </thead>
@@ -571,8 +599,8 @@ export default function CreatePurchaseOrder() {
                       style={{ maxWidth: "100px", maxHeight: "100px" }}
                     />
                   </td>
-                  <td>{productDetail.color.name}</td>
-                  <td>{productDetail.size.name}</td>
+                  <td>{productDetail.color?.name}</td>
+                  <td>{productDetail.size?.name}</td>
                   <td>100.000</td>
                 </tr>
               ))}
