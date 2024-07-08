@@ -1,13 +1,23 @@
 
-  .quantity-field {
-    width: 60px; 
-    text-align: center; 
+  .input-field {
+    width: 80px; 
     border:none;
     border-bottom: 2px solid #ccc; 
     padding: 2px; 
     text-align: center;
     background-color: transparent; 
     outline: none; 
+  }
+  .total{
+    width: 150px;
+  }
+  .action{
+    width: 50px;
+  }
+
+  .underline {
+    text-decoration: none;
+    color: #000;
   }
   
 

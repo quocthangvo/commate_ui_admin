@@ -160,7 +160,7 @@ export default function ProductDetailList() {
                   <td>{productDetail.product.name}</td>
                   <td>
                     <img
-                      src={productDetail.product.image}
+                      src={`http://localhost:8080/uploads/${productDetail.product.productImages[0]?.imageUrl}`}
                       alt="images"
                       style={{ maxWidth: "100px", maxHeight: "100px" }}
                     />

@@ -22,6 +22,11 @@ import sizesApi from "../../../../apis/sizesApi";
 import colorsApi from "../../../../apis/colorsApi";
 import purchaseOrderDetailsApi from "../../../../apis/purchaseOrderDetailsApi";
 
+const formatter = new Intl.NumberFormat("vi-VN", {
+  style: "currency",
+  currency: "VND",
+});
+
 export default function CreatePurchaseOrder() {
   const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState([]);
@@ -38,6 +43,7 @@ export default function CreatePurchaseOrder() {
   const [colors, setColors] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
+  const [priceMap, setPriceMap] = useState({});
   const location = useLocation();
 
   const {
@@ -287,11 +293,11 @@ export default function CreatePurchaseOrder() {
           // Tạo dữ liệu cho purchaseOrderDetail
           const purchaseOrderDetailData = {
             purchase_order_id: purchaseOrderId,
-            product_details: selectedProductIds, // Use selected product IDs
-            quantity: data.quantity,
-            price: data.price,
-            unit: data.unit,
-            is_active: data.is_active,
+            product_details: selectedProducts.map((product) => ({
+              product_detail_id: product.id,
+              quantity: quantityMap[product.id] || 1,
+              price: priceMap[product.id] || 0,
+            })),
           };
 
           // Gửi yêu cầu tạo purchaseOrderDetail
@@ -325,10 +331,17 @@ export default function CreatePurchaseOrder() {
     setShowSearchResults(false); // Reset to show full product list
   };
 
-  const handleQuantityChange = (productId, newQuantity) => {
+  const handleQuantityChange = (productId, quantity) => {
     setQuantityMap((prevMap) => ({
       ...prevMap,
-      [productId]: newQuantity,
+      [productId]: quantity,
+    }));
+  };
+
+  const handlePriceChange = (productId, price) => {
+    setPriceMap((prev) => ({
+      ...prev,
+      [productId]: price,
     }));
   };
 
@@ -412,6 +425,7 @@ export default function CreatePurchaseOrder() {
           </div>
           <div className="form-group">
             <h3 className="form-header">Sản phẩm đã chọn</h3>
+
             <Table bordered hover>
               <thead>
                 <tr>
@@ -420,11 +434,10 @@ export default function CreatePurchaseOrder() {
                   <th>Hình ảnh</th>
                   <th>Màu sắc</th>
                   <th>Kích thước</th>
-                  <th>Đơn vị</th>
                   <th>Đơn giá</th>
                   <th>Số lượng</th>
                   <th>Thành tiền</th>
-                  <th>Hành động</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -443,18 +456,25 @@ export default function CreatePurchaseOrder() {
                     <td>{product.size?.name}</td>
                     <td>
                       <input
-                        {...register("unit")}
-                        type="text"
-                        className="form-control"
+                        {...register(`price_${product.id}`, { required: true })}
+                        type="number"
+                        className="input-field"
+                        onChange={(e) =>
+                          handlePriceChange(
+                            product.id,
+                            parseFloat(e.target.value)
+                          )
+                        }
                       />
                     </td>
-                    <td>100.000</td>
                     <td>
                       <input
                         type="number"
-                        className="quantity-field"
+                        className="input-field"
                         value={quantityMap[product.id] || 1}
-                        {...register("quantity")}
+                        {...register(`quantity_${product.id}`, {
+                          required: true,
+                        })}
                         onChange={(e) =>
                           handleQuantityChange(
                             product.id,
@@ -464,11 +484,16 @@ export default function CreatePurchaseOrder() {
                         min="1"
                       />
                     </td>
-                    <td>{(quantityMap[product.id] || 1) * 100000}</td>
-                    <td>
+                    <td className="total">
+                      {formatter.format(
+                        (quantityMap[product.id] || 1) *
+                          (priceMap[product.id] || 0)
+                      )}
+                    </td>
+                    <td className="action">
                       <button
                         type="button"
-                        className="btn btn-danger btn-sm"
+                        className="btn btn-danger btn-sm "
                         onClick={() => removeSelectedProduct(product.id)}
                       >
                         <FontAwesomeIcon icon={faTimes} />
@@ -576,7 +601,6 @@ export default function CreatePurchaseOrder() {
               <th>Hình ảnh</th>
               <th>Màu sắc</th>
               <th>Kích thước</th>
-              <th>Thành tiền</th>
             </tr>
           </thead>
           {showSearchResults && (
@@ -601,7 +625,6 @@ export default function CreatePurchaseOrder() {
                   </td>
                   <td>{productDetail.color?.name}</td>
                   <td>{productDetail.size?.name}</td>
-                  <td>100.000</td>
                 </tr>
               ))}
             </tbody>

@@ -25,6 +25,7 @@ import CreateSupplier from "./pages/Supplier/components/CreateSupplier";
 import UpdateSupplier from "./pages/Supplier/components/UpdateSupplier";
 import PurchaseOrderList from "./pages/PurchaseOrder/PurchaseOrderList";
 import CreatePurchaseOrder from "./pages/PurchaseOrder/components/CreatePurchaseOrder";
+import PurchaseOrderDetailList from "./pages/PurchaseOrderDetail/PurchaseOrderDetailList";
 
 export default function useRouterElement() {
   return useRoutes([
@@ -222,6 +223,14 @@ export default function useRouterElement() {
       element: (
         <MainLayout>
           <CreatePurchaseOrder />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/purchaseOrderDetails/purchaseOrder/:id",
+      element: (
+        <MainLayout>
+          <PurchaseOrderDetailList />
         </MainLayout>
       ),
     },

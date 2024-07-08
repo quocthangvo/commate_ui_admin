@@ -9,6 +9,7 @@ import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
 import "../../css/ProductList.css";
 import { useForm } from "react-hook-form";
 import categoriesApi from "../../apis/categoriesApi";
+import errorImage from "../../uploads/error_image.png";
 
 export default function ProductList() {
   const location = useLocation();
@@ -251,12 +252,17 @@ export default function ProductList() {
                   <td>{index + 1}</td>
                   <td>
                     <img
-                      src={`/uploads/${product.productImages[0]?.image_url}`}
-                      // src={product.productImages[0]?.imageUrl}
+                      src={
+                        product.productImages &&
+                        product.productImages.length > 0
+                          ? `http://localhost:8080/uploads/${product.productImages[0]?.imageUrl}`
+                          : errorImage
+                      }
                       style={{ width: "50px", height: "50px" }}
                       alt="images"
                     />
                   </td>
+
                   <td className="">
                     <Link
                       className="text-decoration-none text-dark"

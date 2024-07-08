@@ -53,7 +53,7 @@ export default function CreateProductDetail() {
     formData.append("colorId", data.color_id);
 
     productDetailsApi
-      .createProductDetail(formData)
+      .CreateProductDetail(formData)
       .then((response) => {
         if (response.status === 200) {
           toast.success(response.data.message);
