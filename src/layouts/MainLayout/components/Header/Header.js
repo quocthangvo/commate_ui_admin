@@ -3,8 +3,7 @@ import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import NavDropdown from "react-bootstrap/NavDropdown";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
+
 import "../../../../css/Header.css";
 import "../../../../css/AuthLayout.css";
 import { useNavigate } from "react-router-dom";
@@ -20,14 +19,17 @@ export default function Header() {
     localStorage.removeItem("token");
     navigate("/");
   };
+  const handleSetting = () => {
+    navigate("/account");
+  };
 
   return (
     <Navbar expand="lg" className="bg-body-tertiary">
       <Container>
-        <Navbar.Brand href="/mainLayout">Coolmate</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        {/* <Navbar.Brand href="/mainLayout">Coolmate</Navbar.Brand> */}
+        {/* <Navbar.Toggle aria-controls="basic-navbar-nav" /> */}
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="">
+          {/* <Nav className="">
             <form className="form-inline my-2 my-lg-1">
               <div className="input-group">
                 <input
@@ -44,11 +46,11 @@ export default function Header() {
                 </div>
               </div>
             </form>
-          </Nav>
+          </Nav> */}
         </Navbar.Collapse>
         <Nav className="right-nav">
           <NavDropdown title="ADMIN" id="basic-nav-dropdown">
-            <NavDropdown.Item href="/account">Cài đặt</NavDropdown.Item>
+            <NavDropdown.Item onClick={handleSetting}>Cài đặt</NavDropdown.Item>
             <NavDropdown.Divider />
             <NavDropdown.Item onClick={handleLogout}>
               Đăng xuất

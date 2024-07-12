@@ -7,8 +7,8 @@ const productDetailsApi = {
   getByProductId: (productId) =>
     http.get(`product_details/product/${productId}`),
   deleteProductDetail: (id) => http.delete(`product_details/delete/${id}`),
-  searchProductDetail: (name) =>
-    http.get(`product_details/search?name=${name}`),
+  searchProductDetail: (versionName, id) =>
+    http.get(`product_details/search?versionName=${versionName}&id=${id}`),
   findBySizeId: (id) => http.get(`product_details/size/${id}`),
   findByColorId: (id) => http.get(`product_details/color/${id}`),
   findBySizeAndColorId: (sizeId, colorId) =>

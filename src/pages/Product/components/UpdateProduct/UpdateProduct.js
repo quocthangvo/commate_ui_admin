@@ -10,13 +10,11 @@ import { toast } from "react-toastify";
 export default function UpdateProduct() {
   const navigate = useNavigate();
   const { id: productId } = useParams();
-  const [product, setProduct] = useState({});
   const [categories, setCategories] = useState([]);
-
   const [messageError, setMessageError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState();
   const [currentCategoryId, setCurrentCategoryId] = useState();
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [images, setImages] = useState([]);
 
   const {
     register,
@@ -26,41 +24,33 @@ export default function UpdateProduct() {
   } = useForm({
     resolver: yupResolver(createNameSchema),
   });
+
   useEffect(() => {
     categoriesApi.getAllCategories().then((response) => {
       setCategories(response.data.data);
     });
   }, []);
+
   useEffect(() => {
     productsApi.getProductById(productId).then((response) => {
-      setProduct(response.data);
-      setCurrentCategoryId(response.data.category_id);
+      const productData = response.data;
+      setValue("name", productData.name);
+      setCurrentCategoryId(productData.category_id);
+      setSelectedCategory(productData.category_id);
     });
-  }, [productId]);
-  useEffect(() => {
-    // console.log(   );
-    setValue("name", product.name || "");
-    setSelectedCategory(product.category_id);
-  }, [product, setValue]);
-
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    setSelectedImage(file);
-  };
+  }, [productId, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     const formData = new FormData();
-    if (selectedImage) {
-      formData.append("image", selectedImage); // Append selected image file to FormData
-    }
 
-    data.category_id = selectedCategory || currentCategoryId;
+    formData.append("name", data.name);
+    formData.append("category_id", selectedCategory || currentCategoryId);
 
     try {
       const response = await productsApi.updateProduct(productId, formData);
       if (response.status === 200) {
-        toast.success(response.data.message);
-        navigate(-1); // Navigate back to previous page
+        const id = response.data.data.id;
+        handleUploadImages(id);
       }
     } catch (error) {
       setMessageError(error.response.data.message);
@@ -68,7 +58,42 @@ export default function UpdateProduct() {
   });
 
   const handleSelectedCategory = (e) => {
-    setSelectedCategory(e.target.value); //chọn id khác
+    setSelectedCategory(e.target.value);
+  };
+
+  const onFileUploadImage = (e) => {
+    setImages(e.target.files);
+    console.log(e.target.files);
+  };
+
+  const insertImage = () => {
+    return [...images].map((image, index) => (
+      <div key={index} className="image-item mt-5">
+        <img src={URL.createObjectURL(image)} alt="" />
+      </div>
+    ));
+  };
+
+  const handleUploadImages = (id) => {
+    const formData = new FormData();
+    for (let i = 0; i < images.length; i++) {
+      formData.append("files", images[i]);
+    }
+    productsApi
+      .uploadImages(id, formData)
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success(response.data.message);
+          navigate(-1); // Redirect after successful image upload
+        }
+      })
+      .catch((error) => {
+        if (error.response) {
+          setMessageError(error.response.data.message);
+        } else {
+          setMessageError("Đã xảy ra lỗi khi gửi yêu cầu.");
+        }
+      });
   };
 
   return (
@@ -109,20 +134,33 @@ export default function UpdateProduct() {
               className={`form-control ${errors.name ? "is-invalid" : false}`}
               id="name"
             />
-
             <div className="invalid-feedback">{errors.name?.message}</div>
           </div>
 
+          <div className="">
+            <label htmlFor="sku" className="form-label">
+              Mã sku
+            </label>
+            <input
+              {...register("sku")}
+              type="text"
+              className={`form-control ${errors.sku ? "is-invalid" : false}`}
+            />
+            <div className="invalid-feedback">{errors.sku?.message}</div>
+          </div>
+
           <div className="form-group">
-            <label htmlFor="image" className="form-label">
+            <label className="form-label" htmlFor="sizes">
               Hình ảnh
             </label>
             <input
-              {...register("image")}
               type="file"
+              multiple
+              accept="image/*"
+              onChange={onFileUploadImage}
               className="form-control"
-              onChange={handleImageChange} // Handle file selection
             />
+            <div className="image-grid">{insertImage()}</div>
           </div>
 
           <div className=" mt-4 ">
@@ -156,6 +194,7 @@ export default function UpdateProduct() {
             >
               Hủy
             </button>
+
             <button type="submit" className="btn btn-primary px-5">
               Lưu
             </button>

@@ -12,7 +12,6 @@ export default function ProductDetailList() {
   const navigate = useNavigate();
   const { id: productId } = useParams();
   const [productDetails, setProductDetails] = useState([]);
-
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -125,6 +124,7 @@ export default function ProductDetailList() {
             </Button>
           </div>
         </div>
+
         {productDetails.length === 0 ? (
           <p className="text-center">Không có chi tiết sản phẩm nào.</p>
         ) : (
@@ -140,10 +140,7 @@ export default function ProductDetailList() {
                   />
                 </th>
                 <th>ID</th>
-                <th>Tên sản phẩm</th>
-                <th>Hình ảnh</th>
-                <th>Màu sắc</th>
-                <th>Kích thước</th>
+                <th>Tên phiên bản</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -157,16 +154,10 @@ export default function ProductDetailList() {
                     />
                   </td>
                   <td>{index + 1}</td>
-                  <td>{productDetail.product.name}</td>
-                  <td>
-                    <img
-                      src={`http://localhost:8080/uploads/${productDetail.product.productImages[0]?.imageUrl}`}
-                      alt="images"
-                      style={{ maxWidth: "100px", maxHeight: "100px" }}
-                    />
+                  <td style={{ width: "1000px" }}>
+                    {productDetail.versionName}
                   </td>
-                  <td>{productDetail.color.name}</td>
-                  <td>{productDetail.size.name}</td>
+
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>
                     <Link
                       to={`/productDetails/${productDetail.id}`}

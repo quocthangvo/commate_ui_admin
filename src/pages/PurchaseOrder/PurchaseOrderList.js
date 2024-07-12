@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Alert, Button, Table } from "react-bootstrap";
-
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
-import purchaseOrdersApi from "../../apis/purchaseOrders";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
+import purchaseOrdersApi from "../../apis/purchaseOrdersApi";
+import { useForm } from "react-hook-form";
 
 export default function PurchaseOrderList() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -15,6 +15,9 @@ export default function PurchaseOrderList() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [orderDate, setOrderDate] = useState("");
+
+  const { register } = useForm();
 
   const fetchPurchaseOrders = () => {
     purchaseOrdersApi
@@ -39,11 +42,11 @@ export default function PurchaseOrderList() {
           toast(response.data.message);
           fetchPurchaseOrders();
         } else {
-          showErrorMessage("Không thể xóa");
+          toast.error(response.data.message);
         }
       })
       .catch((error) => {
-        showErrorMessage(error.response.data.message);
+        toast.error(error.response.data.message);
       })
       .finally(() => {
         setShowConfirmModal(false);
@@ -56,14 +59,14 @@ export default function PurchaseOrderList() {
       .updatePurchaseOrder(orderId, { status: "DELIVERED" })
       .then((response) => {
         if (response.status === 200) {
-          toast("Đơn hàng đã được xác nhận thành công.");
+          toast.success(response.data.message);
           fetchPurchaseOrders();
         } else {
-          showErrorMessage("Không thể xác nhận đơn hàng.");
+          toast.error(response.data.message);
         }
       })
       .catch((error) => {
-        showErrorMessage(error.response.data.message);
+        toast.error(error.response.data.message);
       });
   };
 
@@ -84,7 +87,7 @@ export default function PurchaseOrderList() {
       .searchPurchaseOrder(code)
       .then((response) => {
         if (response.status === 200) {
-          setPurchaseOrders(response.data);
+          setPurchaseOrders(response.data.data);
         }
       })
       .catch((error) => {
@@ -92,20 +95,37 @@ export default function PurchaseOrderList() {
       });
   };
 
+  const filterByOrderDate = () => {
+    if (orderDate) {
+      purchaseOrdersApi
+        .getOrderDate(orderDate)
+        .then((response) => {
+          setPurchaseOrders(response.data.data);
+        })
+        .catch((error) => {
+          showErrorMessage(error.response.data.message);
+        });
+    }
+  };
+
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       searchPurchaseOrder(searchValue);
     }
   };
+
   const handleRefresh = () => {
     window.location.reload();
   };
+
   const clearFilter = () => {
     setSearchValue("");
+    setOrderDate("");
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
     fetchPurchaseOrders(); // Fetch all products again
   };
+
   return (
     <div>
       <ConfirmModal
@@ -153,6 +173,26 @@ export default function PurchaseOrderList() {
               <FontAwesomeIcon icon={faSearch} />
             </button>
           </div>
+
+          <div className="form-gr">
+            <input
+              type="date"
+              className="form-control"
+              value={orderDate}
+              onChange={(e) => setOrderDate(e.target.value)}
+            />
+          </div>
+
+          <div className="form-gr">
+            <button
+              className="btn border-black"
+              type="button"
+              onClick={filterByOrderDate}
+            >
+              <FontAwesomeIcon icon={faFilter} /> Lọc theo ngày
+            </button>
+          </div>
+
           <div className="form-gr">
             <button
               className="btn border-black"
@@ -190,11 +230,10 @@ export default function PurchaseOrderList() {
                       {purchaseOrder.code}
                     </Link>
                   </td>
-
                   <td>{purchaseOrder.orderDate}</td>
                   <td>{purchaseOrder.shippingDate}</td>
                   <td>{purchaseOrder.status}</td>
-                  <td>{purchaseOrder.supplier?.name}</td>
+                  <td>{purchaseOrder.supplier_name}</td>
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>
                     <button
                       className="btn btn-success ms-2"
@@ -202,15 +241,15 @@ export default function PurchaseOrderList() {
                     >
                       Xác nhận
                     </button>
-                    {/* <button
+                    <button
                       className="btn btn-danger ms-2"
                       onClick={() => {
                         setPurchaseOrderId(purchaseOrder.id);
                         setShowConfirmModal(true);
                       }}
                     >
-                      Hủy đơn hàng
-                    </button> */}
+                      Hủy
+                    </button>
                   </td>
                 </tr>
               ))}

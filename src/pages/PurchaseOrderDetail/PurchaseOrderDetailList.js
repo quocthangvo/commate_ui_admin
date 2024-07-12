@@ -45,24 +45,13 @@ export default function PurchaseOrderDetailList() {
     }
   }, [purchaseOrderDetails, setValue]);
 
-  const handleQuantityUpdate = (id, newQuantity) => {
-    purchaseOrderDetailsApi
-      .updatePurchaseOrderDetail(id, { quantity: newQuantity })
-      .then((response) => {
-        console.log("Cập nhật số lượng thành công!");
-        fetchPurchaseOrderDetails();
-      })
-      .catch((error) => {
-        console.error("Lỗi khi cập nhật số lượng:", error);
-      });
-  };
-
   const handleUpdateOrder = () => {
     // Gọi API cập nhật tất cả các chi tiết đơn đặt hàng đã thay đổi
     Promise.all(
       purchaseOrderDetails.map((detail) =>
         purchaseOrderDetailsApi.updatePurchaseOrderDetail(detail.id, {
           quantity: detail.quantity,
+          price: detail.price, // Thêm cập nhật giá vào đây
         })
       )
     )
@@ -70,7 +59,7 @@ export default function PurchaseOrderDetailList() {
         toast.success("Cập nhật đơn hàng thành công!");
       })
       .catch((error) => {
-        toast.error("Lỗi khi cập nhật đơn hàng!");
+        toast.error("Không thể cập nhật đơn hàng!");
       });
   };
 
@@ -85,13 +74,11 @@ export default function PurchaseOrderDetailList() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Mã đơn hàng</th>
-              <th>Ngày đặt hàng</th>
+              <th>Mã code</th>
               <th>Sản phẩm</th>
               <th>Giá </th>
               <th>Số lượng</th>
               <th>Ghi chú</th>
-              <th>Trạng thái</th>
             </tr>
           </thead>
           <tbody>
@@ -100,14 +87,25 @@ export default function PurchaseOrderDetailList() {
               purchaseOrderDetails.map((purchaseOrderDetail, index) => (
                 <tr key={purchaseOrderDetail.id}>
                   <td>{index + 1}</td>
-                  <td>{purchaseOrderDetail?.purchaseOrderId?.code}</td>
-                  <td>{purchaseOrderDetail?.purchaseOrderId?.orderDate}</td>
+                  <td>{purchaseOrderDetail?.versionCode}</td>
+                  <td>{purchaseOrderDetail?.productDetail?.versionName}</td>
                   <td>
-                    {purchaseOrderDetail?.productDetail?.product.name} -{" "}
-                    {purchaseOrderDetail?.productDetail?.size.name} -{" "}
-                    {purchaseOrderDetail?.productDetail?.color.name}
+                    <input
+                      type="number"
+                      value={purchaseOrderDetail?.price}
+                      className="input-field"
+                      onChange={(e) => {
+                        const newPrice = parseFloat(e.target.value);
+                        setPurchaseOrderDetails((prevDetails) =>
+                          prevDetails.map((detail) =>
+                            detail.id === purchaseOrderDetail.id
+                              ? { ...detail, price: newPrice }
+                              : detail
+                          )
+                        );
+                      }}
+                    />
                   </td>
-                  <td>{purchaseOrderDetail?.price}</td>
                   <td>
                     <input
                       type="number"
@@ -115,19 +113,22 @@ export default function PurchaseOrderDetailList() {
                       className="input-field"
                       onChange={(e) => {
                         const newQuantity = parseInt(e.target.value);
-                        handleQuantityUpdate(
-                          purchaseOrderDetail.id,
-                          newQuantity
+                        setPurchaseOrderDetails((prevDetails) =>
+                          prevDetails.map((detail) =>
+                            detail.id === purchaseOrderDetail.id
+                              ? { ...detail, quantity: newQuantity }
+                              : detail
+                          )
                         );
                       }}
                     />
                   </td>
                   <td>{purchaseOrderDetail?.note}</td>
-                  <td>{purchaseOrderDetail?.status}</td>
                 </tr>
               ))}
           </tbody>
         </Table>
+
         <div className="text-end">
           <button
             type="button"

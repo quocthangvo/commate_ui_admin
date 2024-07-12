@@ -1,101 +1,106 @@
 .sidebar {
-    width: 250px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    z-index: 1;
-    background-color: #4e73df;
-    color: #fff;
-    overflow-y: auto;
-    transition: width 0.3s ease;
-  }
-  
-  .sidebar-brand {
-    padding: 0.5rem 1rem;
-    font-size: 1.5rem;
-  }
-  
-  .sidebar-nav-link {
-    padding: 0.5rem 1rem;
-    color: #fff;
-    transition: background-color 0.3s ease;
-  }
-  
-  .sidebar-nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .sidebar-nav-link i {
-    margin-right: 10px;
-  }
-  
-  .sidebar-heading {
-    padding: 1rem 1rem;
-    font-size: 1.2rem;
-    font-weight: 550;
-    color: #fff;
-  }
-  
-  .nav-item.active .sidebar-nav-link {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  hr.sidebar-divider {
-    border-top-color: rgba(255, 255, 255, 0.5);
-    margin: 0.5rem 0;
-  }
-  
-  .navbar-nav {
-    text-decoration: none; /* Bỏ gạch chân */
-  }
-  /* dropdown */
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 1;
+  background-color: #4e73df;
+  color: #fff;
+  overflow-y: auto;
+  transition: width 0.3s ease;
+}
 
-  .product-info-dropdown {
-    position: relative;
-    cursor: pointer;
-    padding: 10px 0;
-  }
-  
-  .product-info-dropdown .sidebar-heading {
-    color: #fff; /* Màu chính */
-    font-weight: bold;
-    padding: 5px 15px;
-    transition: color 0.2s ease; /* Hiệu ứng chuyển đổi màu */
-  }
-  
-  .product-info-dropdown .sidebar-heading:hover {
-    color: #ffffffd5; /* Màu khi hover */
-  }
-  
-  .product-info-dropdown .dropdown-menu {
-    display: block;
-    position: absolute;
-    z-index: 1;
-    width: 200px;
-    border-radius: 5px;
-    margin-top: 5px;
-   margin-left: 10px;
-  }
-  
-  .product-info-dropdown .dropdown-item {
-    color: gray;
-    padding: 10px;
-    text-decoration: none;
-    display: block;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .product-info-dropdown .dropdown-item:hover {
-    background-color: #f1f1f1;
-    color: #4e73df;
-    font-weight: 500;
-  }
-  
-  .product-info-dropdown .dropdown-item:last-child {
-    border-bottom: none;
-  }
-  
-  .font-icon{
-    margin-left: 5px;
-  }
+.sidebar-brand {
+  padding: 0.5rem 1rem;
+  font-size: 1.5rem;
+}
+
+.sidebar-nav-link {
+  padding: 0.5rem 1rem;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav-link i {
+  margin-right: 10px;
+}
+
+.sidebar-heading {
+  padding: 1rem 1rem;
+  font-size: 1.2rem;
+  font-weight: 550;
+  color: #fff;
+}
+
+.nav-item.active .sidebar-nav-link {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+hr.sidebar-divider {
+  border-top-color: rgba(255, 255, 255, 0.5);
+  margin: 0.5rem 0;
+}
+
+.navbar-nav {
+  text-decoration: none; /* Bỏ gạch chân */
+}
+
+/* Dropdown chung */
+.dropdown-section {
+  position: relative;
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.dropdown-section .sidebar-heading {
+  color: #fff; /* Màu chính */
+  font-weight: bold;
+  padding: 5px 15px;
+  transition: color 0.2s ease; /* Hiệu ứng chuyển đổi màu */
+}
+
+.dropdown-section .sidebar-heading:hover {
+  color: #ffffffd5; /* Màu khi hover */
+}
+
+.dropdown-section .dropdown-menu {
+  display: block;
+  position: absolute;
+  z-index: 1;
+  width: 200px;
+  border-radius: 5px;
+  margin-top: 5px;
+  margin-left: 10px;
+}
+
+.dropdown-section .dropdown-item {
+  color: gray;
+  padding: 10px;
+  text-decoration: none;
+  display: block;
+  border-bottom: 1px solid #ddd;
+}
+
+.dropdown-section .dropdown-item:hover {
+  background-color: #f1f1f1;
+  color: #4e73df;
+  font-weight: 500;
+}
+
+
+.dropdown-section .dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.font-icon {
+  margin-left: 5px;
+}
+.margin-icon{
+  margin-right: 10px;
+  font-size: 15px;
+}

@@ -154,6 +154,7 @@ export default function CreateUser() {
             className={`form-select ${errors.role_id ? "is-invalid" : ""}`}
             id="role_id"
             defaultValue="1"
+            disabled
           >
             <option value="1">User</option>
           </select>

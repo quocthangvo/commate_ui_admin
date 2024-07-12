@@ -239,6 +239,7 @@ export default function ProductList() {
               <th>ID</th>
               <th>Hình ảnh</th>
               <th>Tên sản phẩm</th>
+              <th>Mã sku</th>
               <th>Mô tả</th>
               <th>Danh mục</th>
               <th>Thao tác</th>
@@ -271,6 +272,7 @@ export default function ProductList() {
                       {product.name}
                     </Link>
                   </td>
+                  <td>{product.sku}</td>
                   <td>{product.description}</td>
                   <td>{product?.categoryId?.name}</td>
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>

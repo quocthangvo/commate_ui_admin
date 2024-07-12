@@ -11,6 +11,8 @@ const purchaseOrdersApi = {
     http.put(`purchase_orders/update/${id}`, data),
   searchPurchaseOrder: (code) =>
     http.get(`purchase_orders/search?code=${code}`),
+  getOrderDate: (orderDate) =>
+    http.get(`purchase_orders/order_date?orderDate=${orderDate}`),
 };
 
 export default purchaseOrdersApi;

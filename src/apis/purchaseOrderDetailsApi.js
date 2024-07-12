@@ -6,8 +6,6 @@ const purchaseOrderDetailsApi = {
   },
   getByPurchaseOrderById: (id) =>
     http.get(`purchase_order_details/purchase_order/${id}`),
-  createPurchaseOrderDetail: (data) =>
-    http.post("purchase_order_details", data),
   deletePurchaseOrderDetail: (id) =>
     http.delete(`purchase_order_details/delete/${id}`),
   updatePurchaseOrderDetail: (id, data) =>

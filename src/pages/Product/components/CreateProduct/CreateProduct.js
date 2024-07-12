@@ -79,7 +79,6 @@ export default function CreateProduct() {
         if (response.status === 200) {
           const id = response.data.data.id;
           handleUploadImages(id);
-          console.log(id);
         }
       })
       .catch((error) => {
@@ -139,6 +138,13 @@ export default function CreateProduct() {
                 required
               />
               <div className="invalid-feedback">{errors.name?.message}</div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="sku" className="form-label">
+                Mã sku
+              </label>
+              <input {...register("sku")} className="form-control" required />
             </div>
 
             <div className="form-group">

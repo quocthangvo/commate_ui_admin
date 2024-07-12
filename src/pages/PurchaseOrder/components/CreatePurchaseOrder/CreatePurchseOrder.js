@@ -11,7 +11,6 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { yupResolver } from "@hookform/resolvers/yup";
-import purchaseOrdersApi from "../../../../apis/purchaseOrders";
 import suppliersApi from "../../../../apis/suppliersApi";
 import productDetailsApi from "../../../../apis/productDetailsApi";
 import { purchaseOrderSchema } from "../../../../validations/purchaseOrderSchema";
@@ -20,7 +19,7 @@ import "../../../../css/CreateProduct.css";
 import "../../../../css/PurchaseOrder.css";
 import sizesApi from "../../../../apis/sizesApi";
 import colorsApi from "../../../../apis/colorsApi";
-import purchaseOrderDetailsApi from "../../../../apis/purchaseOrderDetailsApi";
+import purchaseOrdersApi from "../../../../apis/purchaseOrdersApi";
 
 const formatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -35,7 +34,6 @@ export default function CreatePurchaseOrder() {
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]); // State to store selected products
   const [searchValue, setSearchValue] = useState("");
-  const [quantityMap, setQuantityMap] = useState({}); // State to store quantity for each product
   const [showSearchResults, setShowSearchResults] = useState(false); // State to control displaying search results
   const [sizeId, setSizeId] = useState(""); // Ensure this is a string
   const [sizes, setSizes] = useState([]);
@@ -43,7 +41,9 @@ export default function CreatePurchaseOrder() {
   const [colors, setColors] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
+  const [quantityMap, setQuantityMap] = useState({});
   const [priceMap, setPriceMap] = useState({});
+
   const location = useLocation();
 
   const {
@@ -52,9 +52,6 @@ export default function CreatePurchaseOrder() {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(purchaseOrderSchema),
-    defaultValues: {
-      role_id: "2", // Set default value for role here
-    },
   });
 
   useEffect(() => {
@@ -246,34 +243,21 @@ export default function CreatePurchaseOrder() {
     fetchProductDetails();
   }, [fetchProductDetails]);
 
-  const toggleSelectProduct = (product) => {
-    setSelectedProductIds((prevSelected) =>
-      prevSelected.includes(product.id)
-        ? prevSelected.filter((id) => id !== product.id)
-        : [...prevSelected, product.id]
-    );
-    setSelectedProducts((prevSelected) =>
-      prevSelected.find((p) => p.id === product.id)
-        ? prevSelected.filter((p) => p.id !== product.id)
-        : [...prevSelected, product]
-    );
-  };
-
   useEffect(() => {
     suppliersApi.getAllSuppliers().then((response) => {
       setSuppliers(response.data.data);
     });
   }, []);
 
-  const searchProduct = (name) => {
+  const searchProduct = (versionName) => {
     const params = new URLSearchParams();
-    params.append("search", name);
+    params.append("search", versionName);
     window.history.replaceState(null, null, `?${params.toString()}`);
     productDetailsApi
-      .searchProductDetail(name)
+      .searchProductDetail(versionName)
       .then((response) => {
         if (response.status === 200) {
-          setProductDetails(response.data);
+          setProductDetails(response.data.data);
           setShowSearchResults(true); // Show search results
         }
       })
@@ -283,38 +267,22 @@ export default function CreatePurchaseOrder() {
   };
 
   const onSubmit = handleSubmit((data) => {
-    // Gửi yêu cầu tạo purchaseOrder
+    // Prepare data for creating purchase order
+    const purchaseOrderData = {
+      ...data,
+      user_id: 1,
+      purchase_order_detail: selectedProducts.map((product) => ({
+        product_detail_id: product.id,
+        price: priceMap[product.id] || 0, // Ensure default value
+        quantity: quantityMap[product.id] || 1, // Ensure default value
+      })),
+    };
+    // Call API to create purchase order
     purchaseOrdersApi
-      .createPurchaseOrder(data)
+      .createPurchaseOrder(purchaseOrderData)
       .then((response) => {
-        if (response.status === 200) {
-          const purchaseOrderId = response.data.data.id;
-
-          // Tạo dữ liệu cho purchaseOrderDetail
-          const purchaseOrderDetailData = {
-            purchase_order_id: purchaseOrderId,
-            product_details: selectedProducts.map((product) => ({
-              product_detail_id: product.id,
-              quantity: quantityMap[product.id] || 1,
-              price: priceMap[product.id] || 0,
-            })),
-          };
-
-          // Gửi yêu cầu tạo purchaseOrderDetail
-          return purchaseOrderDetailsApi.createPurchaseOrderDetail(
-            purchaseOrderDetailData
-          );
-        } else {
-          throw new Error("Failed to create purchase order");
-        }
-      })
-      .then((response) => {
-        if (response.status === 200) {
-          toast.success("Đã tạo đơn hàng thành công");
-          navigate(-1); // Redirect after successful creation
-        } else {
-          throw new Error("Failed to create purchase order detail");
-        }
+        toast.success("Đã tạo đơn hàng thành công");
+        navigate(-1); // Redirect or handle navigation after successful creation
       })
       .catch((error) => {
         setMessageError(error.message || "Đã xảy ra lỗi khi tạo đơn hàng");
@@ -331,24 +299,38 @@ export default function CreatePurchaseOrder() {
     setShowSearchResults(false); // Reset to show full product list
   };
 
-  const handleQuantityChange = (productId, quantity) => {
-    setQuantityMap((prevMap) => ({
-      ...prevMap,
-      [productId]: quantity,
+  const handleQuantityChange = (productId, newQuantity) => {
+    setQuantityMap((prevQuantityMap) => ({
+      ...prevQuantityMap,
+      [productId]: newQuantity,
     }));
   };
-
-  const handlePriceChange = (productId, price) => {
-    setPriceMap((prev) => ({
-      ...prev,
-      [productId]: price,
+  const handlePriceChange = (productId, newPrice) => {
+    setPriceMap((prevPriceMap) => ({
+      ...prevPriceMap,
+      [productId]: newPrice,
     }));
   };
-
-  const handleKeyPress = (event) => {
-    if (event.key === "Enter") {
-      searchProduct(searchValue);
-    }
+  const toggleSelectProduct = (product) => {
+    setSelectedProductIds((prevSelected) =>
+      prevSelected.includes(product.id)
+        ? prevSelected.filter((id) => id !== product.id)
+        : [...prevSelected, product.id]
+    );
+    setSelectedProducts((prevSelected) =>
+      prevSelected.find((p) => p.id === product.id)
+        ? prevSelected.filter((p) => p.id !== product.id)
+        : [...prevSelected, product]
+    );
+    // Initialize quantity and price to defaults
+    setQuantityMap((prevQuantityMap) => ({
+      ...prevQuantityMap,
+      [product.id]: 1,
+    }));
+    setPriceMap((prevPriceMap) => ({
+      ...prevPriceMap,
+      [product.id]: 0,
+    }));
   };
 
   const removeSelectedProduct = (productId) => {
@@ -358,6 +340,11 @@ export default function CreatePurchaseOrder() {
     setSelectedProducts((prevSelected) =>
       prevSelected.filter((p) => p.id !== productId)
     );
+  };
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      searchProduct(searchValue);
+    }
   };
 
   return (
@@ -399,6 +386,16 @@ export default function CreatePurchaseOrder() {
           </div>
 
           <div className="form-group">
+            <label className="form-label" htmlFor="version_code">
+              Mã code
+            </label>
+            <input {...register("version_code")} className="form-input" />
+            <div className="invalid-feedback">
+              {errors.version_code?.message}
+            </div>
+          </div>
+
+          <div className="form-group">
             <label className="form-label" htmlFor="note">
               Ghi chú:
             </label>
@@ -411,99 +408,87 @@ export default function CreatePurchaseOrder() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="role_id">
-              Người đặt hàng:
-            </label>
-            <input
-              {...register("role_id")}
-              className="form-input"
-              value="Admin"
-              defaultValue="2"
-              disabled
-            />
-            <div className="invalid-feedback">{errors.role_id?.message}</div>
-          </div>
-          <div className="form-group">
             <h3 className="form-header">Sản phẩm đã chọn</h3>
-
-            <Table bordered hover>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Tên sản phẩm</th>
-                  <th>Hình ảnh</th>
-                  <th>Màu sắc</th>
-                  <th>Kích thước</th>
-                  <th>Đơn giá</th>
-                  <th>Số lượng</th>
-                  <th>Thành tiền</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedProducts.map((product, index) => (
-                  <tr key={product.id}>
-                    <td>{index + 1}</td>
-                    <td>{product.product?.name}</td>
-                    <td>
-                      <img
-                        src={product.product?.image}
-                        alt="images"
-                        style={{ maxWidth: "100px", maxHeight: "100px" }}
-                      />
-                    </td>
-                    <td>{product.color?.name}</td>
-                    <td>{product.size?.name}</td>
-                    <td>
-                      <input
-                        {...register(`price_${product.id}`, { required: true })}
-                        type="number"
-                        className="input-field"
-                        onChange={(e) =>
-                          handlePriceChange(
-                            product.id,
-                            parseFloat(e.target.value)
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        className="input-field"
-                        value={quantityMap[product.id] || 1}
-                        {...register(`quantity_${product.id}`, {
-                          required: true,
-                        })}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            product.id,
-                            parseInt(e.target.value, 10)
-                          )
-                        }
-                        min="1"
-                      />
-                    </td>
-                    <td className="total">
-                      {formatter.format(
-                        (quantityMap[product.id] || 1) *
-                          (priceMap[product.id] || 0)
-                      )}
-                    </td>
-                    <td className="action">
-                      <button
-                        type="button"
-                        className="btn btn-danger btn-sm "
-                        onClick={() => removeSelectedProduct(product.id)}
-                      >
-                        <FontAwesomeIcon icon={faTimes} />
-                      </button>
-                    </td>
+            {selectedProducts.length > 0 && ( // Conditionally render if there are selected products
+              <Table bordered hover>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Hình ảnh</th>
+                    <th>Đơn giá</th>
+                    <th>Số lượng</th>
+                    <th>Thành tiền</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {selectedProducts.map((product, index) => (
+                    <tr key={product.id}>
+                      <td>{index + 1}</td>
+                      <td>{product.versionName}</td>
+                      <td>
+                        <img
+                          src={product.product?.image}
+                          alt="images"
+                          style={{ maxWidth: "100px", maxHeight: "100px" }}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          {...register(`price_${product.id}`, {
+                            required: true,
+                          })}
+                          type="number"
+                          className="input-field"
+                          onChange={(e) =>
+                            handlePriceChange(
+                              product.id,
+                              parseFloat(e.target.value)
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          className="input-field"
+                          value={quantityMap[product.id] || 1}
+                          {...register(`quantity_${product.id}`, {
+                            required: true,
+                          })}
+                          onChange={(e) =>
+                            handleQuantityChange(
+                              product.id,
+                              parseInt(e.target.value, 10)
+                            )
+                          }
+                          min="1"
+                        />
+                      </td>
+
+                      <td className="total">
+                        {formatter.format(
+                          (quantityMap[product.id] || 1) *
+                            (priceMap[product.id] || 0)
+                        )}
+                      </td>
+                      <td className="action">
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm "
+                          onClick={() => removeSelectedProduct(product.id)}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
           </div>
+
           <div className="text-end">
             <button
               type="button"
@@ -599,8 +584,7 @@ export default function CreatePurchaseOrder() {
               <th>ID</th>
               <th>Tên sản phẩm</th>
               <th>Hình ảnh</th>
-              <th>Màu sắc</th>
-              <th>Kích thước</th>
+              <th>Danh mục</th>
             </tr>
           </thead>
           {showSearchResults && (
@@ -615,16 +599,15 @@ export default function CreatePurchaseOrder() {
                     />
                   </td>
                   <td>{index + 1}</td>
-                  <td>{productDetail.product?.name}</td>
+                  <td>{productDetail.versionName}</td>
                   <td>
                     <img
-                      src={productDetail.product?.image}
+                      src={`http://localhost:8080/uploads/${productDetail.product?.productImages[0]?.imageUrl}`}
+                      style={{ width: "50px", height: "50px" }}
                       alt="images"
-                      style={{ maxWidth: "100px", maxHeight: "100px" }}
                     />
                   </td>
-                  <td>{productDetail.color?.name}</td>
-                  <td>{productDetail.size?.name}</td>
+                  <td></td>
                 </tr>
               ))}
             </tbody>
