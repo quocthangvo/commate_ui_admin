@@ -5,6 +5,8 @@ import { Alert, Button, Table } from "react-bootstrap";
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
 import suppliersApi from "../../apis/suppliersApi";
+import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function SupplierList() {
   const [suppliers, setSuppliers] = useState([]);
@@ -12,6 +14,7 @@ export default function SupplierList() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const fetchSuppliers = () => {
     suppliersApi
@@ -46,6 +49,26 @@ export default function SupplierList() {
       });
   };
 
+  const searchNameSupllier = (name) => {
+    const params = new URLSearchParams();
+    params.append("search", name);
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    suppliersApi
+      .searchSupplier(name)
+      .then((response) => {
+        if (response.status === 200) {
+          setSuppliers(response.data.data);
+        }
+      })
+      .catch((error) => {
+        showErrorMessage(error.response.data.message);
+      });
+  };
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      searchNameSupllier(searchValue);
+    }
+  };
   const showErrorMessage = (message) => {
     setErrorMessage(message);
     setShowError(true);
@@ -57,6 +80,12 @@ export default function SupplierList() {
 
   const handleRefresh = () => {
     window.location.reload();
+  };
+  const clearFilter = () => {
+    setSearchValue("");
+    const params = new URLSearchParams();
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    fetchSuppliers();
   };
   return (
     <div>
@@ -82,6 +111,37 @@ export default function SupplierList() {
             <Button variant="outline-primary" onClick={handleRefresh}>
               Refresh
             </Button>
+          </div>
+        </div>
+        <div className="d-flex">
+          <div className="input-gr search-input-container">
+            <input
+              type="text"
+              className="form-control border-1 search-input"
+              placeholder="Tìm kiếm..."
+              value={searchValue}
+              onKeyPress={handleKeyPress}
+              onChange={(e) => setSearchValue(e.target.value)}
+              aria-label="Search"
+              aria-describedby="basic-addon2"
+            />
+            <button
+              className="btn search-btn"
+              type="button"
+              onClick={() => searchNameSupllier(searchValue)}
+            >
+              <FontAwesomeIcon icon={faSearch} />
+            </button>
+          </div>
+
+          <div className="form-gr">
+            <button
+              className="btn border-black"
+              type="button"
+              onClick={clearFilter}
+            >
+              <FontAwesomeIcon icon={faFilter} /> Xóa bộ lọc
+            </button>
           </div>
         </div>
         <Table striped bordered hover>

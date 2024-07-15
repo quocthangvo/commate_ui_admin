@@ -15,6 +15,8 @@ const usersApi = {
   deleteUser: (id) => http.delete(`users/delete/${id}`),
   lockUser: (id) => http.delete(`users/${id}`),
   unlockUser: (id) => http.put(`users/${id}`),
+  searchFullName: (fullName) =>
+    http.get(`users/search/full_name?full_name=${fullName}`),
 };
 
 export default usersApi;

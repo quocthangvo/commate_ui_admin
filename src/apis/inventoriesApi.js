@@ -5,9 +5,8 @@ const inventoriesApi = {
     return http.get(`inventories?page=${page}&limit=${limit}`);
   },
   getInventoryById: (id) => http.get(`inventories/${id}`),
-  createColor: (data) => http.post("inventories", data),
-  deleteColor: (id) => http.delete(`inventories/delete/${id}`),
-  updateColor: (id, data) => http.put(`inventories/${id}`, data),
+  searchVersionName: (productDetailId) =>
+    http.get(`inventories/search?productDetailId=${productDetailId}`),
 };
 
 export default inventoriesApi;

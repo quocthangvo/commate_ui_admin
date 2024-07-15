@@ -6,7 +6,7 @@ const orderDetailsApi = {
   },
   getOrderDetailById: (id) => http.get(`order_details/order/${id}`),
   deleteOrderDetail: (id) => http.delete(`order_details/delete/${id}`),
-  updateOrderDetail: (id, data) => http.put(`order_details/${id}`, data),
+  updateOrderDetail: (id, data) => http.put(`order_details/update/${id}`, data),
 };
 
 export default orderDetailsApi;

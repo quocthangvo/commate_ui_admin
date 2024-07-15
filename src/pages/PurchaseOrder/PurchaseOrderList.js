@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
 import purchaseOrdersApi from "../../apis/purchaseOrdersApi";
-import { useForm } from "react-hook-form";
 
 export default function PurchaseOrderList() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -16,8 +15,6 @@ export default function PurchaseOrderList() {
   const [showError, setShowError] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [orderDate, setOrderDate] = useState("");
-
-  const { register } = useForm();
 
   const fetchPurchaseOrders = () => {
     purchaseOrdersApi
@@ -114,16 +111,16 @@ export default function PurchaseOrderList() {
     }
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
   const clearFilter = () => {
     setSearchValue("");
     setOrderDate("");
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
     fetchPurchaseOrders(); // Fetch all products again
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   return (
@@ -236,7 +233,7 @@ export default function PurchaseOrderList() {
                   <td>{purchaseOrder.supplier_name}</td>
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>
                     <button
-                      className="btn btn-success ms-2"
+                      className="btn btn-primary ms-2"
                       onClick={() => handleConfirmOrder(purchaseOrder.id)}
                     >
                       Xác nhận

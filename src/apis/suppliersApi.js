@@ -9,6 +9,7 @@ const suppliersApi = {
   createSupplier: (data) => http.post("suppliers", data),
   deleteSupplier: (id) => http.delete(`suppliers/delete/${id}`),
   updateSupplier: (id, data) => http.put(`suppliers/${id}`, data),
+  searchSupplier: (name) => http.get(`suppliers/search?name=${name}`),
 };
 
 export default suppliersApi;

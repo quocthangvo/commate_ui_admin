@@ -26,7 +26,7 @@ export default function PurchaseOrderDetailList() {
 
   useEffect(() => {
     fetchPurchaseOrderDetails();
-  }, []);
+  }, [fetchPurchaseOrderDetails]);
 
   useEffect(() => {
     if (purchaseOrderDetails.length > 0) {
@@ -55,10 +55,10 @@ export default function PurchaseOrderDetailList() {
         })
       )
     )
-      .then((responses) => {
+      .then(() => {
         toast.success("Cập nhật đơn hàng thành công!");
       })
-      .catch((error) => {
+      .catch(() => {
         toast.error("Không thể cập nhật đơn hàng!");
       });
   };
@@ -70,11 +70,12 @@ export default function PurchaseOrderDetailList() {
           <FontAwesomeIcon icon={faArrowLeft} className="icon-size" />
         </Link>
         <h2 className="text-center mb-4">Chi tiết đơn đặt hàng</h2>
+
         <Table striped bordered hover>
           <thead>
             <tr>
               <th>ID</th>
-              <th>Mã code</th>
+              <th>Mã sku</th>
               <th>Sản phẩm</th>
               <th>Giá </th>
               <th>Số lượng</th>
@@ -87,7 +88,7 @@ export default function PurchaseOrderDetailList() {
               purchaseOrderDetails.map((purchaseOrderDetail, index) => (
                 <tr key={purchaseOrderDetail.id}>
                   <td>{index + 1}</td>
-                  <td>{purchaseOrderDetail?.versionCode}</td>
+                  <td>{purchaseOrderDetail?.productDetail.version_sku}</td>
                   <td>{purchaseOrderDetail?.productDetail?.versionName}</td>
                   <td>
                     <input

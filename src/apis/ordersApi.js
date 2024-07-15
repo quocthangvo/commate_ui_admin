@@ -7,7 +7,9 @@ const ordersApi = {
   getOrderById: (id) => http.get(`orders/${id}`),
   createOrder: (data) => http.post("orders", data),
   deleteOrder: (id) => http.delete(`orders/delete/${id}`),
-  updateOrder: (id, data) => http.put(`orders/${id}`, data),
+  updateOrder: (id, data) => http.put(`orders/update/${id}`, data),
+  searchOrderCode: (orderCode) =>
+    http.get(`orders/search?orderCode=${orderCode}`),
 };
 
 export default ordersApi;

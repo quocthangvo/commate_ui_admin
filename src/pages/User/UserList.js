@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Table, Alert } from "react-bootstrap";
 import ConfirmModal from "../../components/ConfirmModal";
 import usersApi from "../../apis/usersApi";
 import { toast } from "react-toastify";
+import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
@@ -12,12 +14,9 @@ export default function UserList() {
   const [showConfirmModalLock, setShowConfirmModalLock] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = () => {
+  const fetchUsers = useCallback(() => {
     usersApi
       .getAllUsers() // API call
       .then((response) => {
@@ -26,7 +25,11 @@ export default function UserList() {
       .catch((error) => {
         console.log(error);
       });
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleDelete = () => {
     usersApi
@@ -68,6 +71,21 @@ export default function UserList() {
       });
   };
 
+  const searchFullName = (fullName) => {
+    const params = new URLSearchParams();
+    params.append("search", fullName);
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    usersApi
+      .searchFullName(fullName)
+      .then((response) => {
+        if (response.status === 200) {
+          setUsers(response.data.data);
+        }
+      })
+      .catch((error) => {
+        showErrorMessage(error.response.data.message);
+      });
+  };
   const showErrorMessage = (message) => {
     setErrorMessage(message);
     setShowError(true);
@@ -77,6 +95,18 @@ export default function UserList() {
     }, 3000); // 3 giây
   };
 
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      searchFullName(searchValue);
+    }
+  };
+
+  const clearFilter = () => {
+    setSearchValue("");
+    const params = new URLSearchParams();
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    fetchUsers(); // Fetch all products again
+  };
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -112,6 +142,37 @@ export default function UserList() {
             <Button variant="outline-primary" onClick={handleRefresh}>
               Refresh
             </Button>
+          </div>
+        </div>
+        <div className="d-flex">
+          <div className="input-gr search-input-container">
+            <input
+              type="text"
+              className="form-control border-1 search-input"
+              placeholder="Tìm kiếm..."
+              value={searchValue}
+              onKeyPress={handleKeyPress}
+              onChange={(e) => setSearchValue(e.target.value)}
+              aria-label="Search"
+              aria-describedby="basic-addon2"
+            />
+            <button
+              className="btn search-btn"
+              type="button"
+              onClick={() => searchFullName(searchValue)}
+            >
+              <FontAwesomeIcon icon={faSearch} />
+            </button>
+          </div>
+
+          <div className="form-gr">
+            <button
+              className="btn border-black"
+              type="button"
+              onClick={clearFilter}
+            >
+              <FontAwesomeIcon icon={faFilter} /> Xóa bộ lọc
+            </button>
           </div>
         </div>
         <Table striped bordered hover>

@@ -1,54 +1,64 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Alert, Button, Table } from "react-bootstrap";
-
-import ConfirmModal from "../../components/ConfirmModal";
-import { toast } from "react-toastify";
 import ordersApi from "../../apis/ordersApi";
+import { toast } from "react-toastify";
+import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function OrderList() {
   const [orders, setOrders] = useState([]);
-  const [orderId, setOrderId] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
-  const navigate = useNavigate();
-
-  const fetchOrders = () => {
+  const fetchOrders = useCallback(() => {
     ordersApi
       .getAllOrders()
       .then((response) => {
         setOrders(response.data.data);
+        setShowError(false); // Clear error state on successful fetch
       })
       .catch((error) => {
-        console.log(error);
+        console.error("Error fetching orders:", error);
+        showErrorMessage("Failed to fetch orders."); // Show error message on fetch failure
       });
-  };
+  }, []);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
-
-  const handleDelete = () => {
+  }, [fetchOrders]);
+  const handleUpdateStatus = (orderId, newStatus) => {
     ordersApi
-      .deleteOrder(orderId)
+      .updateOrder(orderId, { status: newStatus })
+      .then((response) => {
+        toast.success(response.data.message);
+        fetchOrders();
+      })
+      .catch((error) => {
+        showErrorMessage(error.response.data.message);
+      });
+  };
+
+  const searchOrderCode = (orderCode) => {
+    const params = new URLSearchParams();
+    params.append("search", orderCode);
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    ordersApi
+      .searchOrderCode(orderCode)
       .then((response) => {
         if (response.status === 200) {
-          toast(response.data.message);
-          fetchOrders();
-        } else {
-          showErrorMessage("Không thể xóa");
+          setOrders(response.data.data);
         }
       })
       .catch((error) => {
         showErrorMessage(error.response.data.message);
-      })
-      .finally(() => {
-        setShowConfirmModal(false);
-        setOrderId(null);
       });
+  };
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      searchOrderCode(searchValue);
+    }
   };
 
   const showErrorMessage = (message) => {
@@ -57,7 +67,14 @@ export default function OrderList() {
     setTimeout(() => {
       setShowError(false);
       setErrorMessage("");
-    }, 3000); // 3 giây
+    }, 3000); // Clear error message after 3 seconds
+  };
+
+  const clearFilter = () => {
+    setSearchValue("");
+    const params = new URLSearchParams();
+    window.history.replaceState(null, null, `?${params.toString()}`);
+    fetchOrders();
   };
 
   const handleRefresh = () => {
@@ -65,87 +82,94 @@ export default function OrderList() {
   };
 
   return (
-    <div>
-      <ConfirmModal
-        title="Confirm Delete"
-        content="Bạn có muốn xóa không?"
-        onClick={handleDelete}
-        show={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-      />
-      <div className="container my-4">
-        <h2 className="text-center mb-4">Đơn hàng</h2>
-        {showError && <Alert variant="danger">{errorMessage}</Alert>}
-        <div className="row mb-3">
-          <div className="col">
-            <Link
-              className="btn btn-primary me-1"
-              to="/orders/create"
-              role="button"
-            >
-              Thêm đơn hàng
-            </Link>
-            <Button variant="outline-primary" onClick={handleRefresh}>
-              Refresh
-            </Button>
-          </div>
+    <div className="container my-4">
+      <h2 className="text-center mb-4">Danh sách đơn hàng</h2>
+      {showError && <Alert variant="danger">{errorMessage}</Alert>}
+      <Button variant="outline-primary mb-3" onClick={handleRefresh}>
+        Refresh
+      </Button>
+      <div className="d-flex">
+        <div className="input-gr search-input-container">
+          <input
+            type="text"
+            className="form-control border-1 search-input"
+            placeholder="Tìm kiếm..."
+            value={searchValue}
+            onKeyPress={handleKeyPress}
+            onChange={(e) => setSearchValue(e.target.value)}
+            aria-label="Search"
+            aria-describedby="basic-addon2"
+          />
+          <button
+            className="btn search-btn"
+            type="button"
+            onClick={() => searchOrderCode(searchValue)}
+          >
+            <FontAwesomeIcon icon={faSearch} />
+          </button>
         </div>
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Mã đơn hàng</th>
-              <th>Tên khách hàng</th>
-              <th>Số điện thoại</th>
-              <th>Địa chỉ</th>
-              <th>Ngày đặt hàng</th>
-              <th>Ngày giao hàng</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders &&
-              orders.length > 0 &&
-              orders.map((order, index) => (
-                <tr key={order.id}>
-                  <td>{index + 1}</td>
-                  <td>
-                    <Link
-                      to={`/orders/orderDetail/${order.id}`}
-                      className="underline"
-                    >
-                      {order.orderCode}
-                    </Link>
-                  </td>
-                  <td>{order.fullName}</td>
-                  <td>{order.phoneNumber}</td>
-                  <td>{order.address}</td>
-                  <td>{order.orderDate}</td>
-                  <td>{order.shippingDate}</td>
-                  <td>{order.status}</td>
-                  <td style={{ width: 1, whiteSpace: "nowrap" }}>
-                    <Link
-                      className="btn btn-success btn-sm me-1"
-                      to={`/orders/${order.id}`}
-                    >
-                      Xác nhận
-                    </Link>
-                    <button
-                      className="btn btn-danger ms-2"
-                      onClick={() => {
-                        setOrderId(order.id);
-                        setShowConfirmModal(true);
-                      }}
-                    >
-                      Hủy
-                    </button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </Table>
+
+        <div className="form-gr">
+          <button
+            className="btn border-black"
+            type="button"
+            onClick={clearFilter}
+          >
+            <FontAwesomeIcon icon={faFilter} /> Xóa bộ lọc
+          </button>
+        </div>
       </div>
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Mã đơn hàng</th>
+            <th>Tên khách hàng</th>
+            <th>Địa chỉ</th>
+            <th>Số điện thoại</th>
+            <th>Ngày đặt hàng</th>
+            <th>Ngày giao hàng</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((order) => (
+            <tr key={order.id}>
+              <td>{order.id}</td>
+              <td>
+                <Link
+                  to={`/orders/orderDetail/${order.id}`}
+                  className="underline"
+                >
+                  {order.orderCode}
+                </Link>
+              </td>
+              <td>{order.fullName}</td>
+              <td>{order.address}</td>
+              <td>{order.phoneNumber}</td>
+              <td>{order.orderDate}</td>
+              <td>{order.shippingDate}</td>
+              <td>
+                <div className="mt-2">
+                  <select
+                    className="form-select"
+                    value={order.status}
+                    onChange={(e) =>
+                      handleUpdateStatus(order.id, e.target.value)
+                    }
+                  >
+                    <option value="PENDING">Chờ xử lý</option>
+                    <option value="PROCESSING">Xác nhận</option>
+                    <option value="SHIPPING">Đang giao hàng</option>
+                    <option value="DELIVERED">Đã giao hàng</option>
+                    <option value="CANCELLED">Hủy</option>
+                  </select>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </div>
   );
 }

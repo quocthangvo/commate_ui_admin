@@ -271,18 +271,18 @@ export default function CreatePurchaseOrder() {
     const purchaseOrderData = {
       ...data,
       user_id: 1,
-      purchase_order_detail: selectedProducts.map((product) => ({
+      purchase_order_details: selectedProducts.map((product) => ({
         product_detail_id: product.id,
-        price: priceMap[product.id] || 0, // Ensure default value
-        quantity: quantityMap[product.id] || 1, // Ensure default value
+        price: priceMap[product.id] || 0,
+        quantity: quantityMap[product.id] || 1,
       })),
     };
-    // Call API to create purchase order
+
     purchaseOrdersApi
       .createPurchaseOrder(purchaseOrderData)
       .then((response) => {
-        toast.success("Đã tạo đơn hàng thành công");
-        navigate(-1); // Redirect or handle navigation after successful creation
+        toast.success(response.data.message);
+        navigate(-1);
       })
       .catch((error) => {
         setMessageError(error.message || "Đã xảy ra lỗi khi tạo đơn hàng");
@@ -415,7 +415,7 @@ export default function CreatePurchaseOrder() {
                   <tr>
                     <th>ID</th>
                     <th>Tên sản phẩm</th>
-                    <th>Hình ảnh</th>
+
                     <th>Đơn giá</th>
                     <th>Số lượng</th>
                     <th>Thành tiền</th>
@@ -427,13 +427,7 @@ export default function CreatePurchaseOrder() {
                     <tr key={product.id}>
                       <td>{index + 1}</td>
                       <td>{product.versionName}</td>
-                      <td>
-                        <img
-                          src={product.product?.image}
-                          alt="images"
-                          style={{ maxWidth: "100px", maxHeight: "100px" }}
-                        />
-                      </td>
+
                       <td>
                         <input
                           {...register(`price_${product.id}`, {
@@ -583,8 +577,7 @@ export default function CreatePurchaseOrder() {
               </th>
               <th>ID</th>
               <th>Tên sản phẩm</th>
-              <th>Hình ảnh</th>
-              <th>Danh mục</th>
+              <th>Mã sku</th>
             </tr>
           </thead>
           {showSearchResults && (
@@ -600,14 +593,7 @@ export default function CreatePurchaseOrder() {
                   </td>
                   <td>{index + 1}</td>
                   <td>{productDetail.versionName}</td>
-                  <td>
-                    <img
-                      src={`http://localhost:8080/uploads/${productDetail.product?.productImages[0]?.imageUrl}`}
-                      style={{ width: "50px", height: "50px" }}
-                      alt="images"
-                    />
-                  </td>
-                  <td></td>
+                  <td>{productDetail.version_sku}</td>
                 </tr>
               ))}
             </tbody>
