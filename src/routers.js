@@ -29,6 +29,10 @@ import PurchaseOrderDetailList from "./pages/PurchaseOrderDetail/PurchaseOrderDe
 import InventoryList from "./pages/Inventory/InventoryList";
 import OrderList from "./pages/Order/OrderList";
 import OrderDetailList from "./pages/OrderDetail/OrderDetailList";
+import PriceList from "./pages/Price/PriceList";
+import CreatePrice from "./pages/Price/components/CreatePrice/CreatePrice";
+import UpdatePrice from "./pages/Price/components/UpdatePrice";
+import PriceAllList from "./pages/Price/PriceAlList";
 
 export default function useRouterElement() {
   return useRoutes([
@@ -261,6 +265,38 @@ export default function useRouterElement() {
       element: (
         <MainLayout>
           <OrderDetailList />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/prices",
+      element: (
+        <MainLayout>
+          <PriceList />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/prices/create",
+      element: (
+        <MainLayout>
+          <CreatePrice />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/prices/update/:id",
+      element: (
+        <MainLayout>
+          <UpdatePrice />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/prices/allPrices",
+      element: (
+        <MainLayout>
+          <PriceAllList />
         </MainLayout>
       ),
     },

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Alert, Button, Table } from "react-bootstrap";
+import { Alert, Button, Pagination, Table } from "react-bootstrap";
 import productsApi from "../../apis/productsApi";
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
@@ -22,6 +22,8 @@ export default function ProductList() {
   const [categoryId, setCategoryId] = useState(""); // Ensure this is a string
   const [categories, setCategories] = useState([]);
   const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const {
     register,
@@ -38,27 +40,35 @@ export default function ProductList() {
     fetchCategories();
   }, [location.search]);
 
-  const fetchProducts = (search = "", category = "") => {
-    // Fetch products based on search and category params
-    if (search !== "" || category !== "") {
-      if (search !== "") {
-        searchProduct(search);
+  const fetchProducts = useCallback(
+    (page = 1, limit = 5, search = "", category = "") => {
+      // Fetch products based on search and category params
+      if (search !== "" || category !== "") {
+        if (search !== "") {
+          searchProduct(search);
+        } else {
+          findByCategoryId(category);
+        }
       } else {
-        findByCategoryId(category);
+        // Fetch all products if no params are provided
+        productsApi
+          .getAllProducts(page, limit)
+          .then((response) => {
+            setProducts(response.data.data.content);
+            setTotalPages(response.data.data.totalPages);
+            console.log(response.data);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
       }
-    } else {
-      // Fetch all products if no params are provided
-      productsApi
-        .getAllProducts()
-        .then((response) => {
-          setProducts(response.data.data);
-          console.log(response.data);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-  };
+    },
+    []
+  );
+
+  useEffect(() => {
+    fetchProducts(currentPage);
+  }, [fetchProducts, currentPage]);
 
   const fetchCategories = () => {
     categoriesApi.getAllCategories().then((response) => {
@@ -148,6 +158,16 @@ export default function ProductList() {
     window.location.reload();
   };
 
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      searchProduct(searchValue);
+    }
+  };
+
   const clearFilter = () => {
     setSearchValue("");
     setCategoryId(""); // Clear categoryId filter
@@ -190,6 +210,7 @@ export default function ProductList() {
               type="text"
               className="form-control border-1 search-input"
               placeholder="Tìm kiếm..."
+              onKeyPress={handleKeyPress}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               aria-label="Search"
@@ -296,21 +317,18 @@ export default function ProductList() {
               ))}
           </tbody>
         </Table>
+        <Pagination>
+          {[...Array(totalPages)].map((_, index) => (
+            <Pagination.Item
+              key={index + 1}
+              active={index + 1 === currentPage}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </Pagination.Item>
+          ))}
+        </Pagination>
       </div>
     </div>
   );
 }
-
-// const multer = require("multer");
-
-// const storage = multer.diskStorage({
-//   destination: (req, file, callback) => {
-//     callback(null, ".public/uploads");
-//   },
-//   filename: (req, file, callback) => {
-//     callback(null, file.oringinalname);
-//   },
-// });
-// const uploadFile = multer({ storage: storage });
-
-// module.exports = uploadFile;

@@ -13,6 +13,9 @@ const productDetailsApi = {
   findByColorId: (id) => http.get(`product_details/color/${id}`),
   findBySizeAndColorId: (sizeId, colorId) =>
     http.get(`product_details/${sizeId}/${colorId}`),
+
+  getProductDetailLastPrice: (product_detail_id) =>
+    http.get(`product_details/last_price/${product_detail_id}`),
 };
 
 export default productDetailsApi;

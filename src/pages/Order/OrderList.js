@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Alert, Button, Table } from "react-bootstrap";
+import { Alert, Button, Table, Pagination } from "react-bootstrap";
 import ordersApi from "../../apis/ordersApi";
 import { toast } from "react-toastify";
 import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
@@ -11,13 +11,16 @@ export default function OrderList() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchOrders = useCallback(() => {
+  const fetchOrders = useCallback((page = 1, limit = 5) => {
     ordersApi
-      .getAllOrders()
+      .getAllOrders(page, limit) // Page number in backend starts from 0
       .then((response) => {
-        setOrders(response.data.data);
-        setShowError(false); // Clear error state on successful fetch
+        setOrders(response.data.data.content);
+        setTotalPages(response.data.data.totalPages);
+        setShowError(false);
       })
       .catch((error) => {
         console.error("Error fetching orders:", error);
@@ -26,14 +29,15 @@ export default function OrderList() {
   }, []);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    fetchOrders(currentPage);
+  }, [fetchOrders, currentPage]);
+
   const handleUpdateStatus = (orderId, newStatus) => {
     ordersApi
       .updateOrder(orderId, { status: newStatus })
       .then((response) => {
         toast.success(response.data.message);
-        fetchOrders();
+        fetchOrders(currentPage);
       })
       .catch((error) => {
         showErrorMessage(error.response.data.message);
@@ -48,13 +52,15 @@ export default function OrderList() {
       .searchOrderCode(orderCode)
       .then((response) => {
         if (response.status === 200) {
-          setOrders(response.data.data);
+          setOrders(response.data.data.content);
+          setTotalPages(response.data.data.totalPages);
         }
       })
       .catch((error) => {
         showErrorMessage(error.response.data.message);
       });
   };
+
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       searchOrderCode(searchValue);
@@ -74,18 +80,21 @@ export default function OrderList() {
     setSearchValue("");
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
-    fetchOrders();
+    fetchOrders(currentPage);
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
   return (
     <div className="container my-4">
       <h2 className="text-center mb-4">Danh sách đơn hàng</h2>
       {showError && <Alert variant="danger">{errorMessage}</Alert>}
-      <Button variant="outline-primary mb-3" onClick={handleRefresh}>
+      <Button
+        variant="outline-primary mb-3"
+        onClick={() => fetchOrders(currentPage)}
+      >
         Refresh
       </Button>
       <div className="d-flex">
@@ -133,9 +142,9 @@ export default function OrderList() {
           </tr>
         </thead>
         <tbody>
-          {orders.map((order) => (
+          {orders.map((order, index) => (
             <tr key={order.id}>
-              <td>{order.id}</td>
+              <td>{index + 1}</td>
               <td>
                 <Link
                   to={`/orders/orderDetail/${order.id}`}
@@ -170,6 +179,17 @@ export default function OrderList() {
           ))}
         </tbody>
       </Table>
+      <Pagination>
+        {[...Array(totalPages)].map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={index + 1 === currentPage}
+            onClick={() => handlePageChange(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+      </Pagination>
     </div>
   );
 }

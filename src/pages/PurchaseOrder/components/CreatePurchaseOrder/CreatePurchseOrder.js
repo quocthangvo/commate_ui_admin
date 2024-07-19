@@ -62,10 +62,10 @@ export default function CreatePurchaseOrder() {
     setSearchValue(searchParam);
     setSizeId(sizeParam);
     setColorId(colorParam);
-    fetchProductDetails(searchParam, sizeParam, colorParam); // Fetch products based on initial URL params
+    fetchProductDetails(searchParam, sizeParam, colorParam);
     fetchSizes();
     fetchColors();
-  }, [location.search]); // Include fetchProductDetails here
+  }, [location.search]);
 
   const fetchProductDetails = useCallback(
     (search = "", size = "", color = "") => {
@@ -322,7 +322,6 @@ export default function CreatePurchaseOrder() {
         ? prevSelected.filter((p) => p.id !== product.id)
         : [...prevSelected, product]
     );
-    // Initialize quantity and price to defaults
     setQuantityMap((prevQuantityMap) => ({
       ...prevQuantityMap,
       [product.id]: 1,
@@ -415,7 +414,6 @@ export default function CreatePurchaseOrder() {
                   <tr>
                     <th>ID</th>
                     <th>Tên sản phẩm</th>
-
                     <th>Đơn giá</th>
                     <th>Số lượng</th>
                     <th>Thành tiền</th>

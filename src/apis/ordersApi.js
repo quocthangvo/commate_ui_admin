@@ -1,7 +1,7 @@
 import http from "../configs/http";
 
 const ordersApi = {
-  getAllOrders: (page = 1, limit = 5) => {
+  getAllOrders: (page = 0, limit = 5) => {
     return http.get(`orders?page=${page}&limit=${limit}`);
   },
   getOrderById: (id) => http.get(`orders/${id}`),

@@ -1,8 +1,8 @@
 // File: InventoryList.js
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Alert, Button, Table } from "react-bootstrap";
+import { Alert, Button, Pagination, Table } from "react-bootstrap";
 import ConfirmModal from "../../components/ConfirmModal";
 import inventoriesApi from "../../apis/inventoriesApi";
 import productDetailsApi from "../../apis/productDetailsApi";
@@ -15,21 +15,24 @@ export default function InventoryList() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchInventories = () => {
+  const fetchInventories = useCallback((page = 1, limit = 2) => {
     inventoriesApi
-      .getAllInventories()
+      .getAllInventories(page, limit)
       .then((response) => {
-        setInventories(response.data.data);
+        setInventories(response.data.data.content);
+        setTotalPages(response.data.data.totalPages);
       })
       .catch((error) => {
         console.log(error);
       });
-  };
+  }, []);
 
   useEffect(() => {
-    fetchInventories();
-  }, []);
+    fetchInventories(currentPage);
+  }, [fetchInventories, currentPage]);
 
   const showErrorMessage = (message) => {
     setErrorMessage(message);
@@ -69,6 +72,10 @@ export default function InventoryList() {
     if (event.key === "Enter") {
       searchByVersionName(searchValue);
     }
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
   const clearFilter = () => {
@@ -156,6 +163,17 @@ export default function InventoryList() {
               ))}
           </tbody>
         </Table>
+        <Pagination>
+          {[...Array(totalPages)].map((_, index) => (
+            <Pagination.Item
+              key={index + 1}
+              active={index + 1 === currentPage}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </Pagination.Item>
+          ))}
+        </Pagination>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Alert, Button, Table } from "react-bootstrap";
+import { Alert, Button, Pagination, Table } from "react-bootstrap";
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
 import suppliersApi from "../../apis/suppliersApi";
@@ -15,21 +15,24 @@ export default function SupplierList() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchSuppliers = () => {
+  const fetchSuppliers = useCallback((page = 1, limit = 2) => {
     suppliersApi
-      .getAllSuppliers()
+      .getAllSuppliers(page, limit)
       .then((response) => {
-        setSuppliers(response.data.data);
+        setSuppliers(response.data.data.content);
+        setTotalPages(response.data.data.totalPages);
       })
       .catch((error) => {
         console.log(error);
       });
-  };
+  }, []);
 
   useEffect(() => {
-    fetchSuppliers();
-  }, []);
+    fetchSuppliers(currentPage);
+  }, [fetchSuppliers, currentPage]);
 
   const handleDelete = () => {
     suppliersApi
@@ -86,6 +89,10 @@ export default function SupplierList() {
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
     fetchSuppliers();
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
   return (
     <div>
@@ -184,6 +191,17 @@ export default function SupplierList() {
               ))}
           </tbody>
         </Table>
+        <Pagination>
+          {[...Array(totalPages)].map((_, index) => (
+            <Pagination.Item
+              key={index + 1}
+              active={index + 1 === currentPage}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </Pagination.Item>
+          ))}
+        </Pagination>
       </div>
     </div>
   );

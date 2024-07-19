@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Alert, Button, Table } from "react-bootstrap";
+import { Alert, Button, Pagination, Table } from "react-bootstrap";
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,21 +15,24 @@ export default function PurchaseOrderList() {
   const [showError, setShowError] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [orderDate, setOrderDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchPurchaseOrders = () => {
+  const fetchPurchaseOrders = useCallback((page = 1, limit = 10) => {
     purchaseOrdersApi
-      .getAllPurchaseOrders()
+      .getAllPurchaseOrders(page, limit)
       .then((response) => {
-        setPurchaseOrders(response.data.data);
+        setPurchaseOrders(response.data.data.content);
+        setTotalPages(response.data.data.totalPages);
       })
       .catch((error) => {
         console.log(error);
       });
-  };
+  }, []);
 
   useEffect(() => {
-    fetchPurchaseOrders();
-  }, []);
+    fetchPurchaseOrders(currentPage);
+  }, [fetchPurchaseOrders, currentPage]);
 
   const handleDelete = () => {
     purchaseOrdersApi
@@ -117,6 +120,10 @@ export default function PurchaseOrderList() {
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
     fetchPurchaseOrders(); // Fetch all products again
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
   const handleRefresh = () => {
@@ -252,6 +259,17 @@ export default function PurchaseOrderList() {
               ))}
           </tbody>
         </Table>
+        <Pagination>
+          {[...Array(totalPages)].map((_, index) => (
+            <Pagination.Item
+              key={index + 1}
+              active={index + 1 === currentPage}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </Pagination.Item>
+          ))}
+        </Pagination>
       </div>
     </div>
   );

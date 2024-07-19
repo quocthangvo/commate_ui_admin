@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Table, Alert } from "react-bootstrap";
+import { Button, Table, Alert, Pagination } from "react-bootstrap";
 import ConfirmModal from "../../components/ConfirmModal";
 import usersApi from "../../apis/usersApi";
 import { toast } from "react-toastify";
@@ -15,12 +15,15 @@ export default function UserList() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchUsers = useCallback(() => {
+  const fetchUsers = useCallback((page = 1, limit = 2) => {
     usersApi
-      .getAllUsers() // API call
+      .getAllUsers(page, limit) // API call
       .then((response) => {
         setUsers(response.data.users); // Update state
+        setTotalPages(response.data.totalPage);
       })
       .catch((error) => {
         console.log(error);
@@ -28,8 +31,8 @@ export default function UserList() {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsers(currentPage);
+  }, [fetchUsers, currentPage]);
 
   const handleDelete = () => {
     usersApi
@@ -56,7 +59,7 @@ export default function UserList() {
       .lockUser(userId)
       .then((response) => {
         if (response.status === 200) {
-          fetchUsers();
+          fetchUsers(currentPage);
           toast.success(response.data.message);
         } else {
           showErrorMessage("Không thể khóa ");
@@ -99,6 +102,10 @@ export default function UserList() {
     if (event.key === "Enter") {
       searchFullName(searchValue);
     }
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
   const clearFilter = () => {
@@ -224,6 +231,17 @@ export default function UserList() {
               ))}
           </tbody>
         </Table>
+        <Pagination>
+          {[...Array(totalPages)].map((_, index) => (
+            <Pagination.Item
+              key={index + 1}
+              active={index + 1 === currentPage}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </Pagination.Item>
+          ))}
+        </Pagination>
       </div>
     </div>
   );

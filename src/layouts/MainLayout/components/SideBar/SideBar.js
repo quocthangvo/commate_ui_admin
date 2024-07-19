@@ -13,6 +13,7 @@ import {
   faWarehouse,
   faUser,
   faClipboard,
+  faMoneyBill,
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function SideBar() {
@@ -37,6 +38,7 @@ export default function SideBar() {
     { to: "/colors", label: "Màu sắc", icon: faPalette },
     { to: "/sizes", label: "Kích thước", icon: faRuler },
     { to: "/categories", label: "Danh mục", icon: faTags },
+    { to: "/prices", label: "Giá", icon: faMoneyBill },
   ];
 
   const orderDropdownItems = [

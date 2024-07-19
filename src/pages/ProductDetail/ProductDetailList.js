@@ -7,6 +7,7 @@ import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import ConfirmModal from "../../components/ConfirmModal";
+import { format } from "date-fns";
 
 export default function ProductDetailList() {
   const navigate = useNavigate();
@@ -101,6 +102,11 @@ export default function ProductDetailList() {
     );
   };
 
+  const formatDate = (date) => {
+    if (!date) return "Không giới hạn";
+    return format(new Date(date), "dd/MM/yyyy HH:mm");
+  };
+
   return (
     <div>
       <ConfirmModal
@@ -141,6 +147,10 @@ export default function ProductDetailList() {
                 </th>
                 <th>ID</th>
                 <th>Tên phiên bản</th>
+                <th>Giá bán</th>
+                <th>Giá khuyến mãi</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -154,10 +164,23 @@ export default function ProductDetailList() {
                     />
                   </td>
                   <td>{index + 1}</td>
-                  <td style={{ width: "1000px" }}>
-                    {productDetail.versionName}
+                  <td style={{ width: "500px" }}>
+                    {productDetail.version_name}
                   </td>
-
+                  <td>
+                    {productDetail.price?.price_selling.toLocaleString(
+                      "vi-VN",
+                      { style: "currency", currency: "VND" }
+                    )}
+                  </td>
+                  <td>
+                    {productDetail.price?.promotion_price.toLocaleString(
+                      "vi-VN",
+                      { style: "currency", currency: "VND" }
+                    )}
+                  </td>
+                  <td> {formatDate(productDetail.price?.start_date)}</td>
+                  <td> {formatDate(productDetail.price?.end_date)}</td>
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>
                     <Link
                       to={`/productDetails/${productDetail.id}`}
