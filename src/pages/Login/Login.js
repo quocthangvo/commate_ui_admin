@@ -1,50 +1,55 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Row, Col } from "react-bootstrap";
-
 import { useForm } from "react-hook-form";
 import usersApi from "../../apis/usersApi";
 import { toast } from "react-toastify";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { loginSchema } from "../../validations/loginSchema";
 
 export default function Login() {
   const navigate = useNavigate();
-  const {
-    register,
-    handleSubmit,
-    // formState: { errors },
-  } = useForm();
+  const { register, handleSubmit } = useForm({
+    resolver: yupResolver(loginSchema),
+  });
 
   const onSubmit = async (data) => {
-    console.log(data);
     try {
       const response = await usersApi.login(data.phone_number, data.password);
 
       // Xử lý kết quả từ API
       if (response.status === 200) {
+        const { roles, token } = response.data.data;
+
         // Lưu token vào localStorage (nếu có)
-        localStorage.setItem("accessToken", response.data.token);
-        // Điều hướng đến trang dashboard hoặc trang chủ
-        navigate("/mainLayout");
-      } else {
-        if (response.status === 401) {
-          toast.error("Số điện thoại hoặc mật khẩu không đúng.");
+        localStorage.setItem("accessToken", token);
+
+        // Hiển thị thông báo thành công
+        toast.success(response.data.message);
+
+        // Điều hướng đến trang dựa trên vai trò của người dùng
+        if (roles.name === "ADMIN") {
+          navigate("/mainLayout");
         } else {
-          toast.error("Đăng nhập thất bại. Vui lòng thử lại sau.");
+          navigate("/userDashboard");
         }
+      } else {
+        // Hiển thị thông báo lỗi từ API
+        toast.error(response.data.message);
       }
     } catch (error) {
       // Xử lý lỗi nếu có lỗi từ API hoặc mạng
       console.error("Đăng nhập lỗi:", error);
-      toast.error("Đăng nhập thất bại. Vui lòng thử lại sau.");
+      const errorMessage =
+        error.response?.data?.message ||
+        "Đăng nhập thất bại. Vui lòng thử lại sau.";
+      toast.error(errorMessage);
     }
   };
 
   return (
     <div className="">
-      <h1 className="d-flex justify-content-center m-5 wel">
-        Welcome back! Admin
-      </h1>
-
+      <h1 className="d-flex justify-content-center m-5 wel">Đăng nhập</h1>
       <Row
         className="justify-content-center align-items-center "
         style={{ minHeight: "50vh" }}
@@ -69,7 +74,8 @@ export default function Login() {
                 <Form.Control
                   type="tel"
                   placeholder="Số điện thoại"
-                  {...register("phone_number", { required: true })}
+                  {...register("phone_number")}
+                  required
                 />
               </Form.Group>
               <Form.Group controlId="formBasicPassword" className="form-group">
@@ -77,7 +83,8 @@ export default function Login() {
                 <Form.Control
                   type="password"
                   placeholder="Mật khẩu"
-                  {...register("password", { required: true })}
+                  {...register("password")}
+                  required
                 />
               </Form.Group>
               <Form.Group controlId="formBasicCheckbox" className="form-group">
