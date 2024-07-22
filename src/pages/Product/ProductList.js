@@ -9,7 +9,7 @@ import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
 import "../../css/ProductList.css";
 import { useForm } from "react-hook-form";
 import categoriesApi from "../../apis/categoriesApi";
-import errorImage from "../../uploads/error_image.png";
+import errorImage from "../../assets/img/error/error_image.png";
 
 export default function ProductList() {
   const location = useLocation();
