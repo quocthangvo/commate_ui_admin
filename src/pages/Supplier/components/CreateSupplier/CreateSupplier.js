@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
-
-import "../../../../css/CreateProduct.css";
+import "../../../../css/Create.css";
 import { createNameSchema } from "../../../../validations/nameSchema";
 import suppliersApi from "../../../../apis/suppliersApi";
 
@@ -35,7 +34,14 @@ export default function CreateSize() {
         setMessageError(error.response.data.message);
       });
   });
-  console.log(errors);
+  useEffect(() => {
+    if (messageError) {
+      const timer = setTimeout(() => {
+        setMessageError("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [messageError]);
 
   return (
     <div>

@@ -18,11 +18,11 @@ export default function UserList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchUsers = useCallback((page = 1, limit = 2) => {
+  const fetchUsers = useCallback((page = 1, limit = 5) => {
     usersApi
-      .getAllUsers(page, limit) // API call
+      .getAllUsers(page, limit)
       .then((response) => {
-        setUsers(response.data.users); // Update state
+        setUsers(response.data.users);
         setTotalPages(response.data.totalPage);
       })
       .catch((error) => {
@@ -39,8 +39,8 @@ export default function UserList() {
       .deleteUser(userId)
       .then((response) => {
         if (response.status === 200) {
-          fetchUsers();
-          toast(response.data.message);
+          fetchUsers(currentPage);
+          toast.success(response.data.message);
         } else {
           showErrorMessage("Không thể xóa");
         }
@@ -62,11 +62,11 @@ export default function UserList() {
           fetchUsers(currentPage);
           toast.success(response.data.message);
         } else {
-          showErrorMessage("Không thể khóa ");
+          showErrorMessage("Không thể khóa");
         }
       })
       .catch((error) => {
-        showErrorMessage(error.response.data.message);
+        showErrorMessage("Không thể khóa");
       })
       .finally(() => {
         setShowConfirmModalLock(false);
@@ -89,13 +89,14 @@ export default function UserList() {
         showErrorMessage(error.response.data.message);
       });
   };
+
   const showErrorMessage = (message) => {
     setErrorMessage(message);
     setShowError(true);
     setTimeout(() => {
       setShowError(false);
       setErrorMessage("");
-    }, 3000); // 3 giây
+    }, 3000);
   };
 
   const handleKeyPress = (event) => {
@@ -112,10 +113,119 @@ export default function UserList() {
     setSearchValue("");
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
-    fetchUsers(); // Fetch all products again
+    fetchUsers(); // Fetch all users again
   };
+
   const handleRefresh = () => {
     window.location.reload();
+  };
+
+  const generatePageItems = () => {
+    const pages = [];
+    const maxPagesToShow = 5; // Number of pages to show at once
+
+    if (totalPages <= maxPagesToShow) {
+      // Show all pages if there are fewer pages than maxPagesToShow
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(
+          <Pagination.Item
+            key={i}
+            active={i === currentPage}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Pagination.Item>
+        );
+      }
+    } else {
+      // Show pages with ellipses
+      if (currentPage <= Math.ceil(maxPagesToShow / 2)) {
+        // Show pages from the beginning
+        for (let i = 1; i <= maxPagesToShow - 1; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      } else if (currentPage >= totalPages - Math.floor(maxPagesToShow / 2)) {
+        // Show pages from the end
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        for (let i = totalPages - (maxPagesToShow - 2); i <= totalPages; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+      } else {
+        // Show a range of pages around the current page
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        for (
+          let i = currentPage - Math.floor(maxPagesToShow / 2);
+          i <= currentPage + Math.floor(maxPagesToShow / 2);
+          i++
+        ) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      }
+    }
+
+    return pages;
   };
 
   return (
@@ -141,7 +251,7 @@ export default function UserList() {
           <div className="col">
             <Link
               className="btn btn-primary me-1"
-              to="/users/create" // chuyền đén
+              to="/users/create"
               role="button"
             >
               Thêm người dùng
@@ -151,8 +261,8 @@ export default function UserList() {
             </Button>
           </div>
         </div>
-        <div className="d-flex">
-          <div className="input-gr search-input-container">
+        <div className="d-flex mb-3">
+          <div className="input-gr search-input-container me-2">
             <input
               type="text"
               className="form-control border-1 search-input"
@@ -171,7 +281,6 @@ export default function UserList() {
               <FontAwesomeIcon icon={faSearch} />
             </button>
           </div>
-
           <div className="form-gr">
             <button
               className="btn border-black"
@@ -232,15 +341,17 @@ export default function UserList() {
           </tbody>
         </Table>
         <Pagination>
-          {[...Array(totalPages)].map((_, index) => (
-            <Pagination.Item
-              key={index + 1}
-              active={index + 1 === currentPage}
-              onClick={() => handlePageChange(index + 1)}
-            >
-              {index + 1}
-            </Pagination.Item>
-          ))}
+          <Pagination.Prev
+            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          />
+          {generatePageItems()}
+          <Pagination.Next
+            onClick={() =>
+              currentPage < totalPages && handlePageChange(currentPage + 1)
+            }
+            disabled={currentPage === totalPages}
+          />
         </Pagination>
       </div>
     </div>

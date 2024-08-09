@@ -16,6 +16,7 @@ const productsApi = {
         "Content-Type": "multipart/form-data",
       },
     }),
+  getImages: (id) => http.get(`products/images/${id}`),
 };
 
 export default productsApi;

@@ -1,0 +1,38 @@
+
+.status-pending { 
+   font-weight: bold;
+   color: #f0ad4e; 
+  }
+  
+  .status-processing {
+   font-weight: bold;
+   color: #5bc0de; 
+  }
+  
+  .status-shipping {
+   font-weight: bold;
+   color: #5bc0de;
+  }
+
+  .status-delivered {
+    color: #5cb85c; 
+   font-weight: bold;
+  }
+
+  .status-cancelled {
+   font-weight: bold;
+   color: #d9534f; 
+  }
+  
+  .status-select {
+    border-radius: 4px; /* Thêm bo góc nếu cần */
+    padding: 0.375rem 0.75rem; /* Điều chỉnh padding */
+    font-weight: bold;
+  }
+
+.form-select-no-border {
+    border: none; 
+    box-shadow: none; 
+    background-color: transparent;
+  }
+  

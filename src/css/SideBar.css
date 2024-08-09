@@ -5,8 +5,8 @@
   left: 0;
   height: 100%;
   z-index: 1;
-  background-color: #4e73df;
-  color: #fff;
+  background-color: #2c3e50; /* Màu nền xanh dương hiện đại */
+  color: #ecf0f1; /* Màu chữ sáng */
   overflow-y: auto;
   transition: width 0.3s ease;
 }
@@ -18,12 +18,12 @@
 
 .sidebar-nav-link {
   padding: 0.5rem 1rem;
-  color: #fff;
+  color: #ecf0f1; /* Màu chữ sáng */
   transition: background-color 0.3s ease;
 }
 
 .sidebar-nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1); /* Màu nền khi hover */
 }
 
 .sidebar-nav-link i {
@@ -34,11 +34,12 @@
   padding: 1rem 1rem;
   font-size: 1.2rem;
   font-weight: 550;
-  color: #fff;
+  color: #ecf0f1; /* Màu chữ sáng */
+
 }
 
 .nav-item.active .sidebar-nav-link {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1); /* Màu nền khi mục đang hoạt động */
 }
 
 hr.sidebar-divider {
@@ -58,14 +59,14 @@ hr.sidebar-divider {
 }
 
 .dropdown-section .sidebar-heading {
-  color: #fff; /* Màu chính */
-  font-weight: bold;
+  color: #ecf0f1; /* Màu chữ sáng */
+  font-weight: 400;
   padding: 5px 15px;
   transition: color 0.2s ease; /* Hiệu ứng chuyển đổi màu */
 }
 
 .dropdown-section .sidebar-heading:hover {
-  color: #ffffffd5; /* Màu khi hover */
+  color: #bdc3c7; /* Màu khi hover */
 }
 
 .dropdown-section .dropdown-menu {
@@ -74,12 +75,13 @@ hr.sidebar-divider {
   z-index: 1;
   width: 200px;
   border-radius: 5px;
+  background-color: #34495e; /* Màu nền dropdown */
   margin-top: 5px;
   margin-left: 10px;
 }
 
 .dropdown-section .dropdown-item {
-  color: gray;
+  color: #ecf0f1; /* Màu chữ sáng */
   padding: 10px;
   text-decoration: none;
   display: block;
@@ -87,11 +89,10 @@ hr.sidebar-divider {
 }
 
 .dropdown-section .dropdown-item:hover {
-  background-color: #f1f1f1;
-  color: #4e73df;
-  font-weight: 500;
+  background-color: #1abc9c; /* Màu nền khi hover */
+  color: #ecf0f1; /* Màu chữ khi hover */
+  font-weight: 450;
 }
-
 
 .dropdown-section .dropdown-item:last-child {
   border-bottom: none;
@@ -100,7 +101,8 @@ hr.sidebar-divider {
 .font-icon {
   margin-left: 5px;
 }
-.margin-icon{
+
+.margin-icon {
   margin-right: 10px;
   font-size: 15px;
 }

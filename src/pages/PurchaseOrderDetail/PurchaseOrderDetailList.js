@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import errorImage from "../../assets/img/error/error_image.png";
 
 export default function PurchaseOrderDetailList() {
   const navigate = useNavigate();
@@ -75,8 +76,9 @@ export default function PurchaseOrderDetailList() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Mã sku</th>
+              <th>Hình ảnh</th>
               <th>Sản phẩm</th>
+              <th>Mã sku</th>
               <th>Giá </th>
               <th>Số lượng</th>
               <th>Ghi chú</th>
@@ -88,8 +90,20 @@ export default function PurchaseOrderDetailList() {
               purchaseOrderDetails.map((purchaseOrderDetail, index) => (
                 <tr key={purchaseOrderDetail.id}>
                   <td>{index + 1}</td>
+                  <td>
+                    <img
+                      src={
+                        purchaseOrderDetail.productDetail.images &&
+                        purchaseOrderDetail.productDetail.images.length > 0
+                          ? `http://localhost:8080/uploads/${purchaseOrderDetail.productDetail?.images[0]}`
+                          : errorImage
+                      }
+                      style={{ width: "50px", height: "50px" }}
+                      alt="images"
+                    />
+                  </td>
+                  <td>{purchaseOrderDetail?.productDetail?.version_name}</td>
                   <td>{purchaseOrderDetail?.productDetail.version_sku}</td>
-                  <td>{purchaseOrderDetail?.productDetail?.versionName}</td>
                   <td>
                     <input
                       type="number"

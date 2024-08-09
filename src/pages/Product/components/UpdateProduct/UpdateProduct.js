@@ -1,11 +1,14 @@
-import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import categoriesApi from "../../../../apis/categoriesApi";
 import productsApi from "../../../../apis/productsApi";
 import { createNameSchema } from "../../../../validations/nameSchema";
 import { toast } from "react-toastify";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { CloseButton } from "react-bootstrap";
 
 export default function UpdateProduct() {
   const navigate = useNavigate();
@@ -15,8 +18,10 @@ export default function UpdateProduct() {
   const [selectedCategory, setSelectedCategory] = useState();
   const [currentCategoryId, setCurrentCategoryId] = useState();
   const [images, setImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
 
   const {
+    control,
     register,
     setValue,
     handleSubmit,
@@ -35,15 +40,19 @@ export default function UpdateProduct() {
     productsApi.getProductById(productId).then((response) => {
       const productData = response.data;
       setValue("name", productData.name);
+      setValue("description", productData.description);
+      setValue("sku", productData.sku);
       setCurrentCategoryId(productData.category_id);
       setSelectedCategory(productData.category_id);
+      setExistingImages(productData.product_images);
     });
   }, [productId, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     const formData = new FormData();
-
     formData.append("name", data.name);
+    formData.append("description", data.description);
+    formData.append("sku", data.sku);
     formData.append("category_id", selectedCategory || currentCategoryId);
 
     try {
@@ -63,37 +72,66 @@ export default function UpdateProduct() {
 
   const onFileUploadImage = (e) => {
     setImages(e.target.files);
-    console.log(e.target.files);
+  };
+
+  const removeExistingImage = (index) => {
+    const updatedImages = existingImages.filter((_, i) => i !== index);
+    setExistingImages(updatedImages);
   };
 
   const insertImage = () => {
-    return [...images].map((image, index) => (
-      <div key={index} className="image-item mt-5">
-        <img src={URL.createObjectURL(image)} alt="" />
+    return (
+      <div className="image-grid">
+        {existingImages.map((image, index) => (
+          <div key={index} className="image-item mt-5">
+            <img
+              src={`http://localhost:8080/uploads/${image.imageUrl}`}
+              alt=""
+              style={{ width: "100px", height: "100px" }}
+            />
+            <CloseButton
+              type="button"
+              className="btn"
+              onClick={() => removeExistingImage(index)}
+            ></CloseButton>
+          </div>
+        ))}
+        {[...images].map((image, index) => (
+          <div key={index + existingImages.length} className="image-item mt-5">
+            <img
+              src={URL.createObjectURL(image)}
+              alt=""
+              style={{ width: "100px", height: "100px" }}
+            />
+          </div>
+        ))}
       </div>
-    ));
+    );
   };
 
-  const handleUploadImages = (id) => {
+  const handleUploadImages = async (id) => {
     const formData = new FormData();
     for (let i = 0; i < images.length; i++) {
       formData.append("files", images[i]);
     }
-    productsApi
-      .uploadImages(id, formData)
-      .then((response) => {
-        if (response.status === 200) {
-          toast.success(response.data.message);
-          navigate(-1); // Redirect after successful image upload
-        }
-      })
-      .catch((error) => {
-        if (error.response) {
-          setMessageError(error.response.data.message);
-        } else {
-          setMessageError("Đã xảy ra lỗi khi gửi yêu cầu.");
-        }
-      });
+
+    try {
+      console.log("Uploading images with formData: ", formData);
+      const response = await productsApi.uploadImages(id, formData);
+      console.log("Upload response: ", response);
+
+      if (response.status === 200) {
+        toast.success(response.data.message);
+        navigate(-1); // Redirect after successful image upload
+      }
+    } catch (error) {
+      console.error("Upload error: ", error);
+      setMessageError(
+        error.response
+          ? error.response.data.message
+          : "Đã xảy ra lỗi khi gửi yêu cầu."
+      );
+    }
   };
 
   return (
@@ -104,19 +142,9 @@ export default function UpdateProduct() {
         alignItems: "center",
         justifyContent: "flex-start",
       }}
-      className=""
     >
-      <div
-        style={{
-          width: "648px",
-        }}
-      >
-        <form
-          onSubmit={onSubmit}
-          style={{
-            width: "100%",
-          }}
-        >
+      <div style={{ width: "648px" }}>
+        <form onSubmit={onSubmit} style={{ width: "100%" }}>
           <h2>Cập nhật sản phẩm</h2>
           {messageError && (
             <div className="alert alert-danger" role="alert">
@@ -131,7 +159,7 @@ export default function UpdateProduct() {
             <input
               {...register("name")}
               type="text"
-              className={`form-control ${errors.name ? "is-invalid" : false}`}
+              className={`form-control ${errors.name ? "is-invalid" : ""}`}
               id="name"
             />
             <div className="invalid-feedback">{errors.name?.message}</div>
@@ -144,9 +172,30 @@ export default function UpdateProduct() {
             <input
               {...register("sku")}
               type="text"
-              className={`form-control ${errors.sku ? "is-invalid" : false}`}
+              className={`form-control ${errors.sku ? "is-invalid" : ""}`}
             />
             <div className="invalid-feedback">{errors.sku?.message}</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="description">
+              Mô tả
+            </label>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <CKEditor
+                  editor={ClassicEditor}
+                  data={field.value}
+                  onChange={(event, editor) => field.onChange(editor.getData())}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
+            <div className="invalid-feedback">
+              {errors.description?.message}
+            </div>
           </div>
 
           <div className="form-group">
@@ -160,17 +209,17 @@ export default function UpdateProduct() {
               onChange={onFileUploadImage}
               className="form-control"
             />
-            <div className="image-grid">{insertImage()}</div>
+            {insertImage()}
           </div>
 
-          <div className=" mt-4 ">
+          <div className="mt-4">
             Danh mục
             <select
               {...register("category_id")}
               value={selectedCategory || currentCategoryId}
               onChange={handleSelectedCategory}
               className={`form-select ${
-                errors.category_id ? "is-invalid" : false
+                errors.category_id ? "is-invalid" : ""
               }`}
               aria-label="Default select example"
             >
@@ -194,7 +243,6 @@ export default function UpdateProduct() {
             >
               Hủy
             </button>
-
             <button type="submit" className="btn btn-primary px-5">
               Lưu
             </button>

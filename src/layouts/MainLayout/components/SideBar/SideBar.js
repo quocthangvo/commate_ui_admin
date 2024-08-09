@@ -5,15 +5,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCaretDown,
   faBoxOpen,
-  faPalette,
-  faRuler,
-  faTags,
+  // faPalette,
+  // faRuler,
+  // faTags,
   faClipboardList,
   faTruck,
   faWarehouse,
   faUser,
   faClipboard,
   faMoneyBill,
+  faList,
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function SideBar() {
@@ -33,34 +34,38 @@ export default function SideBar() {
     setIsUserDropdownOpen(!isUserDropdownOpen);
   };
 
-  const productDropdownItems = [
-    { to: "/products", label: "Sản phẩm", icon: faBoxOpen },
-    { to: "/colors", label: "Màu sắc", icon: faPalette },
-    { to: "/sizes", label: "Kích thước", icon: faRuler },
-    { to: "/categories", label: "Danh mục", icon: faTags },
-    { to: "/prices", label: "Giá", icon: faMoneyBill },
-  ];
-
-  const orderDropdownItems = [
-    { to: "/purchaseOrders", label: "Đơn đặt hàng", icon: faClipboardList },
-    { to: "/suppliers", label: "Nhà cung cấp", icon: faTruck },
-    { to: "/inventories", label: "Kho", icon: faWarehouse },
-  ];
   const userDropdownItems = [
     { to: "/users", label: "Tài khoản", icon: faUser },
     { to: "/orders", label: "Đơn hàng", icon: faClipboard },
+  ];
+
+  const productDropdownItems = [
+    // { to: "/colors", label: "Màu sắc", icon: faPalette },
+    // { to: "/sizes", label: "Thuộc tinh", icon: faRuler },
+    // { to: "/categories", label: "Danh mục", icon: faTags },
+    { to: "/properties", label: "Thuộc tính", icon: faList },
+    { to: "/products", label: "Sản phẩm", icon: faBoxOpen },
+  ];
+
+  const orderDropdownItems = [
+    { to: "/suppliers", label: "Nhà cung cấp", icon: faTruck },
+    { to: "/purchaseOrders", label: "Đơn đặt hàng", icon: faClipboardList },
+    { to: "/inventories", label: "Kho", icon: faWarehouse },
+    { to: "/prices", label: "Giá", icon: faMoneyBill },
   ];
 
   return (
     <div>
       <ul className="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion">
         {/* Sidebar - Brand */}
+
         <Link
-          className="d-flex align-items-center justify-content-center sidebar-heading navbar-nav"
+          className="align-items-center sidebar-heading navbar-nav"
           to="/mainLayout"
         >
           Coolmate
         </Link>
+
         <hr className="sidebar-divider" />
 
         <div className="dropdown-section">
@@ -71,6 +76,29 @@ export default function SideBar() {
           {isProductDropdownOpen && (
             <div className="dropdown-menu">
               {productDropdownItems.map((item, index) => (
+                <Link
+                  key={index}
+                  className="nav-link dropdown-item"
+                  to={item.to}
+                >
+                  <FontAwesomeIcon icon={item.icon} className="margin-icon" />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+        <hr className="sidebar-divider" />
+
+        {/* Dropdown đơn hàng */}
+        <div className="dropdown-section">
+          <div className="sidebar-heading" onClick={toggleOrderDropdown}>
+            Đơn hàng
+            <FontAwesomeIcon icon={faCaretDown} className="font-icon" />
+          </div>
+          {isOrderDropdownOpen && (
+            <div className="dropdown-menu">
+              {orderDropdownItems.map((item, index) => (
                 <Link
                   key={index}
                   className="nav-link dropdown-item"
@@ -107,28 +135,6 @@ export default function SideBar() {
           )}
         </div>
         <hr className="sidebar-divider d-none d-md-block" />
-
-        {/* Dropdown đơn hàng */}
-        <div className="dropdown-section">
-          <div className="sidebar-heading" onClick={toggleOrderDropdown}>
-            Đơn hàng
-            <FontAwesomeIcon icon={faCaretDown} className="font-icon" />
-          </div>
-          {isOrderDropdownOpen && (
-            <div className="dropdown-menu">
-              {orderDropdownItems.map((item, index) => (
-                <Link
-                  key={index}
-                  className="nav-link dropdown-item"
-                  to={item.to}
-                >
-                  <FontAwesomeIcon icon={item.icon} className="margin-icon" />
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
       </ul>
     </div>
   );

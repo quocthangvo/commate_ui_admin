@@ -5,6 +5,8 @@ import ordersApi from "../../apis/ordersApi";
 import { toast } from "react-toastify";
 import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { format } from "date-fns"; // Import format from date-fns
+import "../../css/Status.css";
 
 export default function OrderList() {
   const [orders, setOrders] = useState([]);
@@ -14,7 +16,7 @@ export default function OrderList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchOrders = useCallback((page = 1, limit = 5) => {
+  const fetchOrders = useCallback((page = 1, limit = 8) => {
     ordersApi
       .getAllOrders(page, limit) // Page number in backend starts from 0
       .then((response) => {
@@ -52,7 +54,7 @@ export default function OrderList() {
       .searchOrderCode(orderCode)
       .then((response) => {
         if (response.status === 200) {
-          setOrders(response.data.data.content);
+          setOrders(response.data.data);
           setTotalPages(response.data.data.totalPages);
         }
       })
@@ -84,7 +86,130 @@ export default function OrderList() {
   };
 
   const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "status-pending";
+      case "PROCESSING":
+        return "status-processing";
+      case "SHIPPING":
+        return "status-shipping";
+      case "DELIVERED":
+        return "status-delivered";
+      case "CANCELLED":
+        return "status-cancelled";
+      default:
+        return "";
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return format(new Date(dateString), "dd/MM/yyyy HH:mm"); // Định dạng ngày theo định dạng 'dd/MM/yyyy HH:mm'
+  };
+
+  const generatePageItems = () => {
+    const pageItems = [];
+    const maxPagesToShow = 4;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageItems.push(
+          <Pagination.Item
+            key={i}
+            active={i === currentPage}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Pagination.Item>
+        );
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= maxPagesToShow - 1; i++) {
+          pageItems.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-1" />);
+        pageItems.push(
+          <Pagination.Item
+            key={totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      } else if (currentPage > totalPages - 3) {
+        pageItems.push(
+          <Pagination.Item key={1} onClick={() => handlePageChange(1)}>
+            {1}
+          </Pagination.Item>
+        );
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-2" />);
+        for (let i = totalPages - (maxPagesToShow - 2); i <= totalPages; i++) {
+          pageItems.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+      } else {
+        pageItems.push(
+          <Pagination.Item key={1} onClick={() => handlePageChange(1)}>
+            {1}
+          </Pagination.Item>
+        );
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-3" />);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageItems.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-4" />);
+        pageItems.push(
+          <Pagination.Item
+            key={totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      }
+    }
+    return pageItems;
   };
 
   return (
@@ -128,7 +253,7 @@ export default function OrderList() {
           </button>
         </div>
       </div>
-      <Table striped bordered hover>
+      <Table bordered hover>
         <thead>
           <tr>
             <th>ID</th>
@@ -156,12 +281,13 @@ export default function OrderList() {
               <td>{order.fullName}</td>
               <td>{order.address}</td>
               <td>{order.phoneNumber}</td>
-              <td>{order.orderDate}</td>
-              <td>{order.shippingDate}</td>
+              <td>{formatDate(order.orderDate)}</td>
+              <td>{formatDate(order.shippingDate)}</td>
               <td>
                 <div className="mt-2">
                   <select
-                    className="form-select"
+                    className={`form-select form-select-no-border 
+                      ${getStatusClass(order.status)}`}
                     value={order.status}
                     onChange={(e) =>
                       handleUpdateStatus(order.id, e.target.value)
@@ -180,15 +306,15 @@ export default function OrderList() {
         </tbody>
       </Table>
       <Pagination>
-        {[...Array(totalPages)].map((_, index) => (
-          <Pagination.Item
-            key={index + 1}
-            active={index + 1 === currentPage}
-            onClick={() => handlePageChange(index + 1)}
-          >
-            {index + 1}
-          </Pagination.Item>
-        ))}
+        <Pagination.Prev
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+        />
+        {generatePageItems()}
+        <Pagination.Next
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+        />
       </Pagination>
     </div>
   );

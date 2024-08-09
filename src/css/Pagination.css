@@ -1,0 +1,13 @@
+
+.pagination {
+    display: flex;
+    justify-content: flex-end; /* Căn phải */
+    margin-top: 50px; /* Thêm khoảng cách trên */
+}
+
+
+
+
+
+
+

@@ -1,19 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Alert, Button, Table, Pagination } from "react-bootstrap";
+import { Alert, Table, Pagination } from "react-bootstrap";
 import pricesApi from "../../apis/pricesApi";
-import { toast } from "react-toastify";
-import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import { format } from "date-fns";
 
 export default function PriceAllList() {
   const [prices, setPrices] = useState([]);
-  const [priceId, setPriceId] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -46,6 +41,7 @@ export default function PriceAllList() {
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+    fetchPrices(pageNumber);
   };
 
   const formatDate = (date) => {
@@ -60,19 +56,128 @@ export default function PriceAllList() {
     });
   };
 
+  const generatePageItems = () => {
+    const pages = [];
+    const maxPagesToShow = 5; // Number of pages to show at once
+
+    if (totalPages <= maxPagesToShow) {
+      // Show all pages if there are fewer pages than maxPagesToShow
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(
+          <Pagination.Item
+            key={i}
+            active={i === currentPage}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Pagination.Item>
+        );
+      }
+    } else {
+      // Show pages with ellipses
+      if (currentPage <= Math.ceil(maxPagesToShow / 2)) {
+        // Show pages from the beginning
+        for (let i = 1; i <= maxPagesToShow - 1; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      } else if (currentPage >= totalPages - Math.floor(maxPagesToShow / 2)) {
+        // Show pages from the end
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        for (let i = totalPages - (maxPagesToShow - 2); i <= totalPages; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+      } else {
+        // Show a range of pages around the current page
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        for (
+          let i = currentPage - Math.floor(maxPagesToShow / 2);
+          i <= currentPage + Math.floor(maxPagesToShow / 2);
+          i++
+        ) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      }
+    }
+
+    return pages;
+  };
+
   return (
     <div className="container my-4">
-      <h2 className="text-center mb-4">Danh sách giá</h2>
+      <h2 className="text-center mb-4">Danh sách lịch sử giá</h2>
       {showError && <Alert variant="danger">{errorMessage}</Alert>}
       <Link className="btn btn-primary mb-3" to={"/prices"}>
         Giá sản phẩm
       </Link>
 
-      <Table striped bordered hover>
+      <Table bordered hover>
         <thead>
           <tr>
             <th>ID</th>
             <th>Tên sản phẩm</th>
+            <th>Mã sku</th>
             <th>Giá bán</th>
             <th>Giá khuyến mãi</th>
             <th>Ngày bắt đầu</th>
@@ -84,7 +189,8 @@ export default function PriceAllList() {
           {prices.map((price, index) => (
             <tr key={price.price_id}>
               <td>{index + 1}</td>
-              <td>{price.product_detail?.versionName}</td>
+              <td>{price.product_detail_id?.versionName}</td>
+              <td>{price.product_detail_id.version_sku}</td>
               <td>{formatCurrency(price?.price_selling)}</td>
               <td>{formatCurrency(price?.promotion_price)}</td>
               <td>{formatDate(price?.start_date)}</td>
@@ -101,16 +207,17 @@ export default function PriceAllList() {
           ))}
         </tbody>
       </Table>
+
       <Pagination>
-        {[...Array(totalPages)].map((_, index) => (
-          <Pagination.Item
-            key={index + 1}
-            active={index + 1 === currentPage}
-            onClick={() => handlePageChange(index + 1)}
-          >
-            {index + 1}
-          </Pagination.Item>
-        ))}
+        <Pagination.Prev
+          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+        />
+        {generatePageItems()}
+        <Pagination.Next
+          onClick={() =>
+            currentPage < totalPages && handlePageChange(currentPage + 1)
+          }
+        />
       </Pagination>
     </div>
   );

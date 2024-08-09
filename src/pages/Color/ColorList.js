@@ -86,7 +86,7 @@ export default function ColorList() {
             </Button>
           </div>
         </div>
-        <Table striped bordered hover>
+        <Table bordered hover>
           <thead>
             <tr>
               <th>ID</th>

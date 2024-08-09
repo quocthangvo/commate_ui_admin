@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Table } from "react-bootstrap";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import orderDetailsApi from "../../apis/orderDetailsApi";
+import errorImage from "../../assets/img/error/error_image.png";
 
 export default function OrderDetailList() {
   const navigate = useNavigate();
@@ -48,6 +47,7 @@ export default function OrderDetailList() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Hình ảnh</th>
               <th>Tên sản phẩm</th>
               <th>Số lượng</th>
             </tr>
@@ -58,7 +58,19 @@ export default function OrderDetailList() {
               orderDetails.map((orderDetail, index) => (
                 <tr key={orderDetail.id}>
                   <td>{index + 1}</td>
-                  <td>{orderDetail?.productDetail?.versionName}</td>
+                  <td>
+                    <img
+                      src={
+                        orderDetail.product_detail_id.images &&
+                        orderDetail.product_detail_id.images.length > 0
+                          ? `http://localhost:8080/uploads/${orderDetail.product_detail_id.images[0]}`
+                          : errorImage
+                      }
+                      style={{ width: "50px", height: "50px" }}
+                      alt="images"
+                    />
+                  </td>
+                  <td>{orderDetail?.product_detail_id?.version_name}</td>
                   <td>{orderDetail?.quantity}</td>
                 </tr>
               ))}

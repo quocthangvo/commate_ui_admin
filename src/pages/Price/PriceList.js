@@ -1,11 +1,13 @@
-import React, { useCallback } from "react";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import pricesApi from "../../apis/pricesApi";
 import ConfirmModal from "../../components/ConfirmModal";
-import { Alert, Button, Pagination, Table } from "react-bootstrap";
+import { Alert, Pagination, Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 export default function PriceList() {
   const [prices, setPrices] = useState([]);
   const [priceId, setPriceId] = useState(null);
@@ -14,6 +16,8 @@ export default function PriceList() {
   const [showError, setShowError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchValue, setSearchValue] = useState("");
+  const [searchPerformed, setSearchPerformed] = useState(false);
 
   const fetchPrices = useCallback((page = 1, limit = 5) => {
     pricesApi
@@ -27,9 +31,20 @@ export default function PriceList() {
       });
   }, []);
 
-  useEffect(() => {
-    fetchPrices(currentPage);
-  }, [fetchPrices, currentPage]);
+  const searchVersionName = useCallback((versionName, page = 1, limit = 5) => {
+    pricesApi
+      .searchPricesByVersionName(versionName, page, limit)
+      .then((response) => {
+        if (response.status === 200) {
+          setPrices(response.data.data.content);
+          setTotalPages(response.data.data.totalPages);
+          setCurrentPage(page);
+        }
+      })
+      .catch((error) => {
+        showErrorMessage("Error fetching search results.");
+      });
+  }, []);
 
   const handleDelete = () => {
     pricesApi
@@ -37,13 +52,17 @@ export default function PriceList() {
       .then((response) => {
         if (response.status === 200) {
           toast(response.data.message);
-          fetchPrices();
+          if (searchPerformed) {
+            searchVersionName(searchValue, currentPage); // Fetch current page after deletion
+          } else {
+            fetchPrices(currentPage); // Fetch current page after deletion
+          }
         } else {
-          showErrorMessage("Không thể xóa");
+          showErrorMessage("Cannot delete.");
         }
       })
       .catch((error) => {
-        showErrorMessage(error.response.data.message);
+        showErrorMessage("Error deleting price.");
       })
       .finally(() => {
         setShowConfirmModal(false);
@@ -57,18 +76,14 @@ export default function PriceList() {
     setTimeout(() => {
       setShowError(false);
       setErrorMessage("");
-    }, 3000); // 3 giây
+    }, 3000); // 3 seconds
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-  //format ngày
   const formatDate = (date) => {
     if (!date) return "Vĩnh viễn";
     return format(new Date(date), "dd/MM/yyyy HH:mm");
   };
-  //format giá
+
   const formatCurrency = (value) => {
     return value.toLocaleString("vi-VN", {
       style: "currency",
@@ -79,6 +94,143 @@ export default function PriceList() {
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      performSearch();
+    }
+  };
+
+  const performSearch = () => {
+    if (searchValue.trim()) {
+      setSearchPerformed(true);
+      searchVersionName(searchValue.trim().toLowerCase(), 1); // Reset to first page on search
+    }
+  };
+
+  const clearFilter = () => {
+    setSearchValue("");
+    setSearchPerformed(false);
+    fetchPrices(currentPage); // Fetch default prices
+  };
+
+  const generatePageItems = () => {
+    const pages = [];
+    const maxPagesToShow = 4; // Number of pages to show at once
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(
+          <Pagination.Item
+            key={i}
+            active={i === currentPage}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Pagination.Item>
+        );
+      }
+    } else {
+      if (currentPage <= Math.ceil(maxPagesToShow / 2)) {
+        for (let i = 1; i <= maxPagesToShow - 1; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      } else if (currentPage >= totalPages - Math.floor(maxPagesToShow / 2)) {
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        for (let i = totalPages - (maxPagesToShow - 2); i <= totalPages; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+      } else {
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        for (
+          let i = currentPage - Math.floor(maxPagesToShow / 2);
+          i <= currentPage + Math.floor(maxPagesToShow / 2);
+          i++
+        ) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      }
+    }
+
+    return pages;
+  };
+
+  useEffect(() => {
+    if (searchPerformed) {
+      searchVersionName(searchValue, currentPage);
+    } else {
+      fetchPrices(currentPage);
+    }
+  }, [
+    currentPage,
+    fetchPrices,
+    searchPerformed,
+    searchValue,
+    searchVersionName,
+  ]);
+
   return (
     <div>
       <ConfirmModal
@@ -91,6 +243,7 @@ export default function PriceList() {
       <div className="container my-4">
         <h2 className="text-center mb-4">Giá sản phẩm</h2>
         {showError && <Alert variant="danger">{errorMessage}</Alert>}
+
         <div className="row mb-3">
           <div className="col">
             <Link
@@ -100,7 +253,6 @@ export default function PriceList() {
             >
               Thêm giá
             </Link>
-
             <Link
               className="btn btn-outline-primary me-2"
               to="/prices/allPrices"
@@ -109,11 +261,44 @@ export default function PriceList() {
             </Link>
           </div>
         </div>
-        <Table striped bordered hover>
+        <div className="d-flex mb-3">
+          <div className="input-gr search-input-container">
+            <input
+              type="text"
+              className="form-control border-1 search-input"
+              placeholder="Tìm kiếm..."
+              value={searchValue}
+              onKeyPress={handleKeyPress}
+              onChange={(e) => setSearchValue(e.target.value)}
+              aria-label="Search"
+              aria-describedby="basic-addon2"
+            />
+            <button
+              className="btn search-btn"
+              type="button"
+              onClick={performSearch}
+            >
+              <FontAwesomeIcon icon={faSearch} />
+            </button>
+          </div>
+
+          <div className="form-gr ms-2">
+            <button
+              className="btn border-black"
+              type="button"
+              onClick={clearFilter}
+            >
+              <FontAwesomeIcon icon={faFilter} /> Xóa bộ lọc
+            </button>
+          </div>
+        </div>
+
+        <Table bordered hover>
           <thead>
             <tr>
               <th>ID</th>
               <th>Tên sản phẩm</th>
+              <th>Mã sku</th>
               <th>Giá bán</th>
               <th>Giá khuyến mãi</th>
               <th>Ngày bắt đầu</th>
@@ -127,7 +312,8 @@ export default function PriceList() {
               prices.map((price, index) => (
                 <tr key={price.id}>
                   <td>{index + 1}</td>
-                  <td>{price.product_detail?.versionName}</td>
+                  <td>{price.product_detail_id?.versionName}</td>
+                  <td>{price.product_detail_id.version_sku}</td>
                   <td>{formatCurrency(price?.price_selling)}</td>
                   <td>{formatCurrency(price?.promotion_price)}</td>
                   <td>{formatDate(price?.start_date)}</td>
@@ -144,16 +330,17 @@ export default function PriceList() {
               ))}
           </tbody>
         </Table>
+
         <Pagination>
-          {[...Array(totalPages)].map((_, index) => (
-            <Pagination.Item
-              key={index + 1}
-              active={index + 1 === currentPage}
-              onClick={() => handlePageChange(index + 1)}
-            >
-              {index + 1}
-            </Pagination.Item>
-          ))}
+          <Pagination.Prev
+            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+          />
+          {generatePageItems()}
+          <Pagination.Next
+            onClick={() =>
+              currentPage < totalPages && handlePageChange(currentPage + 1)
+            }
+          />
         </Pagination>
       </div>
     </div>

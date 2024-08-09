@@ -13,7 +13,9 @@ import { toast } from "react-toastify";
 import { FormCheck, Table } from "react-bootstrap";
 import pricesApi from "../../../../apis/pricesApi";
 import productDetailsApi from "../../../../apis/productDetailsApi";
+import inventoriesApi from "../../../../apis/inventoriesApi";
 import { createPriceSchema } from "../../../../validations/priceSchema";
+import errorImage from "../../../../assets/img/error/error_image.png";
 
 export default function CreatePrice() {
   const navigate = useNavigate();
@@ -65,22 +67,36 @@ export default function CreatePrice() {
     }
   });
 
-  const searchProduct = (versionName) => {
+  const searchProduct = async (versionName) => {
     const params = new URLSearchParams();
     params.append("search", versionName);
     window.history.replaceState(null, null, `?${params.toString()}`);
 
-    productDetailsApi
-      .searchProductDetail(versionName)
-      .then((response) => {
-        if (response.status === 200) {
-          setProductDetails(response.data.data);
-          setShowSearchResults(true);
-        }
-      })
-      .catch((error) => {
-        setMessageError(error.response.data.message);
-      });
+    try {
+      const productDetailsResponse =
+        await productDetailsApi.searchProductDetail(versionName);
+
+      if (productDetailsResponse.status === 200) {
+        const products = productDetailsResponse.data.data;
+        const inventoryPromises = products.map((product) =>
+          inventoriesApi.getProductDetailId(product.id)
+        );
+
+        const inventoryResponses = await Promise.all(inventoryPromises);
+
+        const filteredProducts = products.filter((product, index) => {
+          const inventoryData = inventoryResponses[index];
+          return (
+            inventoryData.status === 200 && inventoryData.data.data.length > 0
+          );
+        });
+
+        setProductDetails(filteredProducts);
+        setShowSearchResults(true);
+      }
+    } catch (error) {
+      setMessageError(error.response?.data?.message || "Đã xảy ra lỗi.");
+    }
   };
 
   const handleKeyPress = (event) => {
@@ -106,8 +122,27 @@ export default function CreatePrice() {
         prevSelected.filter((p) => p.id !== product.id)
       );
     } else {
-      setSelectedProductIds((prevSelected) => [...prevSelected, product.id]);
-      setSelectedProducts((prevSelected) => [...prevSelected, product]);
+      // Fetch the cost price from the inventory API
+      inventoriesApi
+        .getProductDetailId(product.id)
+        .then((response) => {
+          if (response.status === 200 && response.data.data.length > 0) {
+            const inventory = response.data.data[0];
+            const updatedProduct = { ...product, costPrice: inventory.price };
+
+            setSelectedProductIds((prevSelected) => [
+              ...prevSelected,
+              product.id,
+            ]);
+            setSelectedProducts((prevSelected) => [
+              ...prevSelected,
+              updatedProduct,
+            ]);
+          }
+        })
+        .catch((error) => {
+          setMessageError(error.response.data.message);
+        });
     }
   };
 
@@ -181,6 +216,7 @@ export default function CreatePrice() {
             <tr>
               <th></th>
               <th>ID</th>
+              <th>Hình ảnh</th>
               <th>Tên sản phẩm</th>
               <th>Mã sku</th>
             </tr>
@@ -197,7 +233,18 @@ export default function CreatePrice() {
                     />
                   </td>
                   <td>{index + 1}</td>
-                  <td>{productDetail.versionName}</td>
+                  <td>
+                    <img
+                      src={
+                        productDetail.images && productDetail.images.length > 0
+                          ? `http://localhost:8080/uploads/${productDetail.images[0]}`
+                          : errorImage
+                      }
+                      style={{ width: "50px", height: "50px" }}
+                      alt="images"
+                    />
+                  </td>
+                  <td>{productDetail.version_name}</td>
                   <td>{productDetail.version_sku}</td>
                 </tr>
               ))}
@@ -218,7 +265,9 @@ export default function CreatePrice() {
               <thead>
                 <tr>
                   <th>ID</th>
+                  <th>Hình ảnh</th>
                   <th>Tên sản phẩm</th>
+                  <th>Giá nhập hàng</th>
                   <th>Giá bán</th>
                   <th>Giá khuyến mãi</th>
                   <th>Ngày bắt đầu</th>
@@ -230,7 +279,19 @@ export default function CreatePrice() {
                 {selectedProducts.map((product, index) => (
                   <tr key={product.id}>
                     <td>{index + 1}</td>
-                    <td>{product.versionName}</td>
+                    <td>
+                      <img
+                        src={
+                          product.images && product.images.length > 0
+                            ? `http://localhost:8080/uploads/${product.images[0]}`
+                            : errorImage
+                        }
+                        style={{ width: "50px", height: "50px" }}
+                        alt="images"
+                      />
+                    </td>
+                    <td>{product.version_name}</td>
+                    <td>{product.costPrice ? product.costPrice : "N/A"}</td>
                     <td>
                       <input
                         type="number"

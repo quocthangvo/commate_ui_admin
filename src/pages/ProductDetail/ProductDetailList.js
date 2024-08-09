@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import ConfirmModal from "../../components/ConfirmModal";
 import { format } from "date-fns";
+import errorImage from "../../assets/img/error/error_image.png";
 
 export default function ProductDetailList() {
   const navigate = useNavigate();
@@ -146,6 +147,7 @@ export default function ProductDetailList() {
                   />
                 </th>
                 <th>ID</th>
+                <th>Hình ảnh</th>
                 <th>Tên phiên bản</th>
                 <th>Giá bán</th>
                 <th>Giá khuyến mãi</th>
@@ -164,6 +166,17 @@ export default function ProductDetailList() {
                     />
                   </td>
                   <td>{index + 1}</td>
+                  <td>
+                    <img
+                      src={
+                        productDetail.images && productDetail.images.length > 0
+                          ? `http://localhost:8080/uploads/${productDetail.images[0]}`
+                          : errorImage
+                      }
+                      style={{ width: "50px", height: "50px" }}
+                      alt="images"
+                    />
+                  </td>
                   <td style={{ width: "500px" }}>
                     {productDetail.version_name}
                   </td>

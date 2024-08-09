@@ -16,13 +16,13 @@ import colorsApi from "../../apis/colorsApi";
 import categoriesApi from "../../apis/categoriesApi";
 import ConfirmModal from "../../components/ConfirmModal";
 import "../../css/CreateProduct.css";
-import CreateSize from "./components/CreateSize";
+import CreateSize from "../Size/components/CreateSize";
 import CreateColor from "../Color/components/CreateColor";
 import CreateCategory from "../Category/components/CreateCategory";
 
 // Định nghĩa AttributesList như hiện tại
 
-const SizeList = () => {
+const PropertiesList = () => {
   const [sizes, setSizes] = useState([]);
   const [colors, setColors] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -176,8 +176,7 @@ const SizeList = () => {
     </Container>
   );
 };
-
-export default SizeList;
+export default PropertiesList;
 const AttributesList = ({ title, items, editLink, onDelete }) => (
   <Card className="mb-4">
     <Card.Header as="h3">{title}</Card.Header>

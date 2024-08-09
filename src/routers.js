@@ -33,6 +33,7 @@ import PriceList from "./pages/Price/PriceList";
 import CreatePrice from "./pages/Price/components/CreatePrice/CreatePrice";
 import UpdatePrice from "./pages/Price/components/UpdatePrice";
 import PriceAllList from "./pages/Price/PriceAlList";
+import PropertiesList from "./pages/List/PropertiesList";
 
 export default function useRouterElement() {
   return useRoutes([
@@ -297,6 +298,14 @@ export default function useRouterElement() {
       element: (
         <MainLayout>
           <PriceAllList />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/properties",
+      element: (
+        <MainLayout>
+          <PropertiesList />
         </MainLayout>
       ),
     },

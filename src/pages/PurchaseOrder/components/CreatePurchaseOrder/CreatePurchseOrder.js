@@ -20,6 +20,7 @@ import "../../../../css/PurchaseOrder.css";
 import sizesApi from "../../../../apis/sizesApi";
 import colorsApi from "../../../../apis/colorsApi";
 import purchaseOrdersApi from "../../../../apis/purchaseOrdersApi";
+import errorImage from "../../../../assets/img/error/error_image.png";
 
 const formatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -70,28 +71,9 @@ export default function CreatePurchaseOrder() {
   const fetchProductDetails = useCallback(
     (search = "", size = "", color = "") => {
       const params = new URLSearchParams();
-
-      // Xử lý search
-      if (search !== "") {
-        searchProduct(search);
-        params.append("search", search);
-      } else {
-        params.delete("search");
-      }
-
-      // Xử lý size và color
-      if (size !== "") {
-        params.append("size", size);
-      } else {
-        params.delete("size");
-      }
-
-      if (color !== "") {
-        params.append("color", color);
-      } else {
-        params.delete("color");
-      }
-
+      if (search) params.append("search", search);
+      if (size) params.append("size", size);
+      if (color) params.append("color", color);
       window.history.replaceState(null, null, `?${params.toString()}`);
 
       // Gọi các hàm tìm kiếm với size và color
@@ -126,7 +108,6 @@ export default function CreatePurchaseOrder() {
   const fetchSizes = () => {
     sizesApi.getAllSizes().then((response) => {
       setSizes(response.data.data);
-      console.log(response.data.data);
     });
   };
 
@@ -245,7 +226,7 @@ export default function CreatePurchaseOrder() {
 
   useEffect(() => {
     suppliersApi.getAllSuppliers().then((response) => {
-      setSuppliers(response.data.data);
+      setSuppliers(response.data.data.content);
     });
   }, []);
 
@@ -351,151 +332,7 @@ export default function CreatePurchaseOrder() {
       <Link className="btn btn-link" onClick={() => navigate(-1)}>
         <FontAwesomeIcon icon={faArrowLeft} className="icon-size" />
       </Link>
-      <div className="">
-        <form className="form-container" onSubmit={onSubmit}>
-          <h2 className="form-header">Đặt đơn hàng</h2>
-          {showError && <Alert variant="danger">{errorMessage}</Alert>}
-          {messageError && (
-            <div className="alert alert-danger" role="alert">
-              {messageError}
-            </div>
-          )}
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="supplier_id">
-              Nhà cung cấp:
-            </label>
-            <select
-              {...register("supplier_id")}
-              className={`form-select ${
-                errors.supplier_id ? "is-invalid" : ""
-              }`}
-            >
-              <option value="">-- Chọn nhà cung cấp --</option>
-              {suppliers.length > 0 &&
-                suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </option>
-                ))}
-            </select>
-            <div className="invalid-feedback">
-              {errors.supplier_id?.message}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="version_code">
-              Mã code
-            </label>
-            <input {...register("version_code")} className="form-input" />
-            <div className="invalid-feedback">
-              {errors.version_code?.message}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="note">
-              Ghi chú:
-            </label>
-            <textarea
-              {...register("note")}
-              className="form-input"
-              style={{ height: "100px" }}
-            />
-            <div className="invalid-feedback">{errors.note?.message}</div>
-          </div>
-
-          <div className="form-group">
-            <h3 className="form-header">Sản phẩm đã chọn</h3>
-            {selectedProducts.length > 0 && ( // Conditionally render if there are selected products
-              <Table bordered hover>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Đơn giá</th>
-                    <th>Số lượng</th>
-                    <th>Thành tiền</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedProducts.map((product, index) => (
-                    <tr key={product.id}>
-                      <td>{index + 1}</td>
-                      <td>{product.versionName}</td>
-
-                      <td>
-                        <input
-                          {...register(`price_${product.id}`, {
-                            required: true,
-                          })}
-                          type="number"
-                          className="input-field"
-                          onChange={(e) =>
-                            handlePriceChange(
-                              product.id,
-                              parseFloat(e.target.value)
-                            )
-                          }
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          className="input-field"
-                          value={quantityMap[product.id] || 1}
-                          {...register(`quantity_${product.id}`, {
-                            required: true,
-                          })}
-                          onChange={(e) =>
-                            handleQuantityChange(
-                              product.id,
-                              parseInt(e.target.value, 10)
-                            )
-                          }
-                          min="1"
-                        />
-                      </td>
-
-                      <td className="total">
-                        {formatter.format(
-                          (quantityMap[product.id] || 1) *
-                            (priceMap[product.id] || 0)
-                        )}
-                      </td>
-                      <td className="action">
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm "
-                          onClick={() => removeSelectedProduct(product.id)}
-                        >
-                          <FontAwesomeIcon icon={faTimes} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            )}
-          </div>
-
-          <div className="text-end">
-            <button
-              type="button"
-              className="btn btn-secondary px-4 me-2"
-              onClick={() => navigate(-1)}
-            >
-              Hủy
-            </button>
-            <button type="submit" className="btn btn-primary">
-              <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
-              Tạo đơn đặt hàng
-            </button>
-          </div>
-        </form>
-      </div>
       <div className="">
         <h3 className="text-center mt-5">Chi tiết sản phẩm</h3>
         <div className="d-flex">
@@ -574,6 +411,7 @@ export default function CreatePurchaseOrder() {
                 />
               </th>
               <th>ID</th>
+              <th>Hình ảnh</th>
               <th>Tên sản phẩm</th>
               <th>Mã sku</th>
             </tr>
@@ -590,13 +428,183 @@ export default function CreatePurchaseOrder() {
                     />
                   </td>
                   <td>{index + 1}</td>
-                  <td>{productDetail.versionName}</td>
+                  <td>
+                    <img
+                      src={
+                        productDetail.images && productDetail.images.length > 0
+                          ? `http://localhost:8080/uploads/${productDetail.images[0]}`
+                          : errorImage
+                      }
+                      style={{ width: "50px", height: "50px" }}
+                      alt="images"
+                    />
+                  </td>
+                  <td>{productDetail.version_name}</td>
                   <td>{productDetail.version_sku}</td>
                 </tr>
               ))}
             </tbody>
           )}
         </Table>
+      </div>
+
+      <div className="mt-5">
+        <form className="form-container" onSubmit={onSubmit}>
+          <h2 className="form-header">Đặt đơn hàng</h2>
+          {showError && <Alert variant="danger">{errorMessage}</Alert>}
+          {messageError && (
+            <div className="alert alert-danger" role="alert">
+              {messageError}
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="supplier_id">
+              Nhà cung cấp:
+            </label>
+            <select
+              {...register("supplier_id")}
+              className={`form-select ${
+                errors.supplier_id ? "is-invalid" : ""
+              }`}
+            >
+              <option value="">-- Chọn nhà cung cấp --</option>
+              {suppliers.length > 0 &&
+                suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
+            </select>
+            <div className="invalid-feedback">
+              {errors.supplier_id?.message}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="version_code">
+              Mã code
+            </label>
+            <input {...register("version_code")} className="form-input" />
+            <div className="invalid-feedback">
+              {errors.version_code?.message}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="note">
+              Ghi chú:
+            </label>
+            <textarea
+              {...register("note")}
+              className="form-input"
+              style={{ height: "100px" }}
+            />
+            <div className="invalid-feedback">{errors.note?.message}</div>
+          </div>
+
+          <div className="form-group">
+            <h3 className="form-header">Sản phẩm đã chọn</h3>
+            {selectedProducts.length > 0 && ( // Conditionally render if there are selected products
+              <Table bordered hover>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Hình ảnh</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Mã sku</th>
+                    <th>Đơn giá</th>
+                    <th>Số lượng</th>
+                    <th>Thành tiền</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedProducts.map((product, index) => (
+                    <tr key={product.id}>
+                      <td>{index + 1}</td>
+                      <td>
+                        <img
+                          src={
+                            product.images && product.images.length > 0
+                              ? `http://localhost:8080/uploads/${product.images[0]}`
+                              : errorImage
+                          }
+                          style={{ width: "50px", height: "50px" }}
+                          alt="images"
+                        />
+                      </td>
+                      <td>{product.version_name}</td>
+                      <td>{product.version_sku}</td>
+                      <td>
+                        <input
+                          {...register(`price_${product.id}`, {
+                            required: true,
+                          })}
+                          type="number"
+                          className="input-field"
+                          onChange={(e) =>
+                            handlePriceChange(
+                              product.id,
+                              parseFloat(e.target.value)
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          className="input-field"
+                          value={quantityMap[product.id] || 1}
+                          {...register(`quantity_${product.id}`, {
+                            required: true,
+                          })}
+                          onChange={(e) =>
+                            handleQuantityChange(
+                              product.id,
+                              parseInt(e.target.value, 10)
+                            )
+                          }
+                          min="1"
+                        />
+                      </td>
+
+                      <td className="total">
+                        {formatter.format(
+                          (quantityMap[product.id] || 1) *
+                            (priceMap[product.id] || 0)
+                        )}
+                      </td>
+                      <td className="action">
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm "
+                          onClick={() => removeSelectedProduct(product.id)}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </div>
+
+          <div className="text-end">
+            <button
+              type="button"
+              className="btn btn-secondary px-4 me-2"
+              onClick={() => navigate(-1)}
+            >
+              Hủy
+            </button>
+            <button type="submit" className="btn btn-primary">
+              <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
+              Tạo đơn đặt hàng
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

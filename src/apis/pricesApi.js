@@ -10,6 +10,10 @@ const pricesApi = {
   updatePrice: (id, data) => http.put(`prices/update/${id}`, data),
   getAllPriceDistinct: (page = 1, limit = 5) =>
     http.get(`prices/price_distinct?page=${page}&limit=${limit}`),
+  searchPricesByVersionName: (versionName, page = 1, limit = 5) =>
+    http.get(
+      `prices/search?versionName=${versionName}&page=${page}&limit=${limit}`
+    ),
 };
 
 export default pricesApi;

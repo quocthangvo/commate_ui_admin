@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faTimes } from "@fortawesome/free-solid-svg-icons";
 import "../../../../css/CreateProduct.css";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import categoriesApi from "../../../../apis/categoriesApi";
 import { toast } from "react-toastify";
@@ -12,6 +12,8 @@ import sizesApi from "../../../../apis/sizesApi";
 import productsApi from "../../../../apis/productsApi";
 import { createProductSchema } from "../../../../validations/productSchema";
 import { MultiSelect } from "react-multi-select-component";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
 export default function CreateProduct() {
   const navigate = useNavigate();
@@ -22,10 +24,10 @@ export default function CreateProduct() {
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
   const [images, setImages] = useState([]);
-  // const [productId, setProductId] = useState(null); //state lưu productid
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm({
@@ -46,23 +48,29 @@ export default function CreateProduct() {
 
   const handleSizeChange = (select) => {
     setSelectedSizes(select);
-    console.log(select);
   };
 
   const handleColorChange = (select) => {
     setSelectedColors(select);
-    console.log(select);
   };
 
   const onFileUploadImage = (e) => {
-    setImages(e.target.files);
-    console.log(e.target.files);
+    setImages((prevImages) => [...prevImages, ...e.target.files]);
+  };
+
+  const removeImage = (index) => {
+    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
   const insertImage = () => {
     return [...images].map((image, index) => (
-      <div key={index} className="image-item mt-5">
-        <img src={URL.createObjectURL(image)} alt="" />
+      <div key={index} className="image-item">
+        <img src={URL.createObjectURL(image)} alt={`preview-${index}`} />
+        <FontAwesomeIcon
+          icon={faTimes}
+          className="remove-icon"
+          onClick={() => removeImage(index)}
+        />
       </div>
     ));
   };
@@ -109,8 +117,6 @@ export default function CreateProduct() {
       });
   };
 
-  console.log(errors);
-
   return (
     <div className="container">
       <Link className="btn btn-link mt-3" to="/products">
@@ -144,14 +150,12 @@ export default function CreateProduct() {
               <label htmlFor="sku" className="form-label">
                 Mã sku
               </label>
-              <input {...register("sku")} className="form-control" required />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="description" className="form-label">
-                Mô tả
-              </label>
-              <textarea {...register("description")} className="form-control" />
+              <input
+                {...register("sku")}
+                className="form-control"
+                required
+                placeholder="Nhập mã sku"
+              />
             </div>
 
             <div className="form-group">
@@ -176,6 +180,26 @@ export default function CreateProduct() {
               <div className="invalid-feedback">
                 {errors.category_id?.message}
               </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="description" className="form-label">
+                Mô tả
+              </label>
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <CKEditor
+                    editor={ClassicEditor}
+                    {...field}
+                    onChange={(event, editor) => {
+                      field.onChange(editor.getData());
+                    }}
+                    data={field.value}
+                  />
+                )}
+              />
             </div>
 
             <div className="text-end mt-5">
@@ -208,8 +232,6 @@ export default function CreateProduct() {
                 }))}
                 value={selectedSizes}
                 onChange={handleSizeChange}
-                labelledBy="Chọn kích thước"
-                // className={` ${errors.sizes ? "is-invalid" : ""}`}
               />
               <div className="invalid-feedback">{errors.sizes?.message}</div>
             </div>
@@ -226,8 +248,6 @@ export default function CreateProduct() {
                 }))}
                 value={selectedColors}
                 onChange={handleColorChange}
-                labelledBy="Chọn màu sắc"
-                // className={` ${errors.colors ? "is-invalid" : ""}`}
               />
               <div className="invalid-feedback">{errors.colors?.message}</div>
             </div>
@@ -235,7 +255,7 @@ export default function CreateProduct() {
 
           <form
             className="form-container mt-5 justify-content-start"
-            style={{ height: "300px", maxHeight: "300px", overflowY: "auto" }}
+            style={{ height: "300px", overflowY: "auto" }}
           >
             <h2 className="form-header">Cập nhật ảnh</h2>
             <div className="form-group">

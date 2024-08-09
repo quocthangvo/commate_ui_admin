@@ -19,16 +19,16 @@ export default function Login() {
 
       // Xử lý kết quả từ API
       if (response.status === 200) {
-        const { roles, token } = response.data.data;
+        const { user, token } = response.data.data;
 
         // Lưu token vào localStorage (nếu có)
         localStorage.setItem("accessToken", token);
 
         // Hiển thị thông báo thành công
-        toast.success(response.data.message);
+        // toast.success(response.data.message);
 
         // Điều hướng đến trang dựa trên vai trò của người dùng
-        if (roles.name === "ADMIN") {
+        if (user.role.name === "ADMIN") {
           navigate("/mainLayout");
         } else {
           navigate("/userDashboard");

@@ -1,10 +1,11 @@
 import React, { useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Alert, Button, Pagination, Table } from "react-bootstrap";
+import { Alert, Pagination, Table } from "react-bootstrap";
 import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
 import suppliersApi from "../../apis/suppliersApi";
+import "../../css/Pagination.css";
 import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -18,7 +19,7 @@ export default function SupplierList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchSuppliers = useCallback((page = 1, limit = 2) => {
+  const fetchSuppliers = useCallback((page = 1, limit = 5) => {
     suppliersApi
       .getAllSuppliers(page, limit)
       .then((response) => {
@@ -81,9 +82,6 @@ export default function SupplierList() {
     }, 3000); // 3 giây
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
   const clearFilter = () => {
     setSearchValue("");
     const params = new URLSearchParams();
@@ -115,9 +113,6 @@ export default function SupplierList() {
             >
               Thêm nhà cung cấp
             </Link>
-            <Button variant="outline-primary" onClick={handleRefresh}>
-              Refresh
-            </Button>
           </div>
         </div>
         <div className="d-flex">
@@ -151,7 +146,7 @@ export default function SupplierList() {
             </button>
           </div>
         </div>
-        <Table striped bordered hover>
+        <Table bordered hover>
           <thead>
             <tr>
               <th>ID</th>
@@ -192,13 +187,13 @@ export default function SupplierList() {
           </tbody>
         </Table>
         <Pagination>
-          {[...Array(totalPages)].map((_, index) => (
+          {[...Array(totalPages)].map((_, i) => (
             <Pagination.Item
-              key={index + 1}
-              active={index + 1 === currentPage}
-              onClick={() => handlePageChange(index + 1)}
+              key={i + 1}
+              active={i + 1 === currentPage}
+              onClick={() => handlePageChange(i + 1)}
             >
-              {index + 1}
+              {i + 1}
             </Pagination.Item>
           ))}
         </Pagination>

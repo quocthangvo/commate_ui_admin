@@ -4,9 +4,7 @@
     margin: auto; /* Để căn giữa nếu muốn */
   }
   
-  .search-input {
-    padding-right: 40px; /* Để chừa chỗ cho icon */
-  }
+
   
   .search-btn {
     position: absolute;
@@ -20,14 +18,7 @@
     cursor: pointer; /* Con trỏ khi di chuột qua nút */
   }
   
-  .search-btn:focus {
-    outline: none; /* Loại bỏ viền khi focus */
-  }
-  
-  .search-btn:hover {
-    background-color: #0056b3; /* Màu nền khi hover */
-  }
-  
+
   .input-gr{
     position: relative;
     display: flex;
@@ -42,3 +33,12 @@
     margin-bottom: 20px;
     margin-left: 10px;
   }
+  /* styles.css hoặc tệp CSS của bạn */
+.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 5; /* Hiển thị 5 dòng */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 550px;
+}

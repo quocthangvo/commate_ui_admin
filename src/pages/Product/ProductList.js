@@ -6,10 +6,10 @@ import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
-import "../../css/ProductList.css";
 import { useForm } from "react-hook-form";
 import categoriesApi from "../../apis/categoriesApi";
 import errorImage from "../../assets/img/error/error_image.png";
+import "../../css/ProductList.css";
 
 export default function ProductList() {
   const location = useLocation();
@@ -36,18 +36,18 @@ export default function ProductList() {
     const categoryParam = params.get("category") || "";
     setSearchValue(searchParam);
     setCategoryId(categoryParam);
-    fetchProducts(searchParam, categoryParam); // Fetch products based on initial URL params
+    fetchProducts(searchParam, categoryParam, 1); // Fetch products based on initial URL params
     fetchCategories();
   }, [location.search]);
 
   const fetchProducts = useCallback(
-    (page = 1, limit = 5, search = "", category = "") => {
-      // Fetch products based on search and category params
+    (search = "", category = "", page = currentPage) => {
+      const limit = 5; // Set the limit for the number of products per page
       if (search !== "" || category !== "") {
         if (search !== "") {
-          searchProduct(search);
+          searchProduct(search, page);
         } else {
-          findByCategoryId(category);
+          findByCategoryId(category, page);
         }
       } else {
         // Fetch all products if no params are provided
@@ -63,12 +63,12 @@ export default function ProductList() {
           });
       }
     },
-    []
+    [currentPage]
   );
 
   useEffect(() => {
-    fetchProducts(currentPage);
-  }, [fetchProducts, currentPage]);
+    fetchProducts(searchValue, categoryId, currentPage);
+  }, [fetchProducts, currentPage, searchValue, categoryId]);
 
   const fetchCategories = () => {
     categoriesApi.getAllCategories().then((response) => {
@@ -81,7 +81,7 @@ export default function ProductList() {
       .deleteProduct(productId)
       .then((response) => {
         if (response.status === 200) {
-          fetchProducts(searchValue, categoryId); // Re-fetch products after deletion
+          fetchProducts(searchValue, categoryId, currentPage); // Re-fetch products after deletion
           toast.success(response.data.message);
         } else {
           showErrorMessage("Không thể xóa");
@@ -96,15 +96,13 @@ export default function ProductList() {
       });
   };
 
-  const searchProduct = (name) => {
-    const params = new URLSearchParams();
-    params.append("search", name);
-    window.history.replaceState(null, null, `?${params.toString()}`);
+  const searchProduct = (name, page = 1) => {
     productsApi
-      .searchProduct(name)
+      .searchProduct(name, page)
       .then((response) => {
         if (response.status === 200) {
-          setProducts(response.data);
+          setProducts(response.data.data.content);
+          setTotalPages(response.data.data.totalPages);
         }
       })
       .catch((error) => {
@@ -112,12 +110,9 @@ export default function ProductList() {
       });
   };
 
-  const findByCategoryId = (categoryId) => {
-    const params = new URLSearchParams();
-    params.append("category", categoryId);
-    window.history.replaceState(null, null, `?${params.toString()}`);
+  const findByCategoryId = (categoryId, page = 1) => {
     productsApi
-      .findByCategoryId(categoryId)
+      .findByCategoryId(categoryId, page)
       .then((response) => {
         if (response.status === 200) {
           if (response.data.data.length > 0) {
@@ -125,6 +120,7 @@ export default function ProductList() {
           } else {
             setProducts([]);
           }
+          setTotalPages(response.data.totalPages);
         }
       })
       .catch((error) => {
@@ -142,7 +138,7 @@ export default function ProductList() {
       params.delete("category");
     }
     window.history.replaceState(null, null, `?${params.toString()}`);
-    fetchProducts(searchValue, selectedCategoryId);
+    fetchProducts(searchValue, selectedCategoryId, 1); // Fetch first page
   };
 
   const showErrorMessage = (message) => {
@@ -160,11 +156,12 @@ export default function ProductList() {
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+    fetchProducts(searchValue, categoryId, pageNumber);
   };
 
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
-      searchProduct(searchValue);
+      searchProduct(searchValue, 1); // Fetch first page
     }
   };
 
@@ -174,6 +171,114 @@ export default function ProductList() {
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
     fetchProducts(); // Fetch all products again
+  };
+
+  const generatePageItems = () => {
+    const pages = [];
+    const maxPagesToShow = 5; // Number of pages to show at once
+
+    if (totalPages <= maxPagesToShow) {
+      // Show all pages if there are fewer pages than maxPagesToShow
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(
+          <Pagination.Item
+            key={i}
+            active={i === currentPage}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Pagination.Item>
+        );
+      }
+    } else {
+      // Show pages with ellipses
+      if (currentPage <= Math.ceil(maxPagesToShow / 2)) {
+        // Show pages from the beginning
+        for (let i = 1; i <= maxPagesToShow - 1; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      } else if (currentPage >= totalPages - Math.floor(maxPagesToShow / 2)) {
+        // Show pages from the end
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        for (let i = totalPages - (maxPagesToShow - 2); i <= totalPages; i++) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+      } else {
+        // Show a range of pages around the current page
+        pages.push(
+          <Pagination.Item
+            key={1}
+            active={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Pagination.Item>
+        );
+        pages.push(<Pagination.Ellipsis key="ellipsis-start" />);
+        for (
+          let i = currentPage - Math.floor(maxPagesToShow / 2);
+          i <= currentPage + Math.floor(maxPagesToShow / 2);
+          i++
+        ) {
+          pages.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pages.push(<Pagination.Ellipsis key="ellipsis-end" />);
+        pages.push(
+          <Pagination.Item
+            key={totalPages}
+            active={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      }
+    }
+
+    return pages;
   };
 
   return (
@@ -204,7 +309,7 @@ export default function ProductList() {
           </div>
         </div>
 
-        <div className="d-flex">
+        <div className="d-flex mb-3">
           <div className="input-gr search-input-container">
             <input
               type="text"
@@ -219,13 +324,13 @@ export default function ProductList() {
             <button
               className="btn search-btn"
               type="button"
-              onClick={() => searchProduct(searchValue)}
+              onClick={() => searchProduct(searchValue, 1)}
             >
               <FontAwesomeIcon icon={faSearch} />
             </button>
           </div>
 
-          <div className="form-gr">
+          <div className="form-gr ms-2">
             <select
               {...register("category_id")}
               value={categoryId}
@@ -243,7 +348,7 @@ export default function ProductList() {
             </select>
           </div>
 
-          <div className="form-gr">
+          <div className="form-gr ms-2">
             <button
               className="btn border-black"
               type="button"
@@ -254,15 +359,15 @@ export default function ProductList() {
           </div>
         </div>
 
-        <Table striped bordered hover>
+        <Table bordered hover>
           <thead>
             <tr>
               <th>ID</th>
               <th>Hình ảnh</th>
               <th>Tên sản phẩm</th>
               <th>Mã sku</th>
-              <th>Mô tả</th>
-              <th>Danh mục</th>
+              <th style={{ width: "80px" }}>Mô tả</th>
+              <th style={{ width: "100px" }}>Danh mục</th>
               <th>Thao tác</th>
             </tr>
           </thead>
@@ -293,8 +398,8 @@ export default function ProductList() {
                       {product.name}
                     </Link>
                   </td>
-                  <td>{product.sku}</td>
-                  <td>{product.description}</td>
+                  <td style={{ width: "80px" }}>{product?.sku}</td>
+                  <td className="description">{product.description}</td>
                   <td>{product?.categoryId?.name}</td>
                   <td style={{ width: 1, whiteSpace: "nowrap" }}>
                     <Link
@@ -317,17 +422,20 @@ export default function ProductList() {
               ))}
           </tbody>
         </Table>
-        <Pagination>
-          {[...Array(totalPages)].map((_, index) => (
-            <Pagination.Item
-              key={index + 1}
-              active={index + 1 === currentPage}
-              onClick={() => handlePageChange(index + 1)}
-            >
-              {index + 1}
-            </Pagination.Item>
-          ))}
-        </Pagination>
+
+        <div className="d-flex justify-content-end">
+          <Pagination>
+            <Pagination.Prev
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            />
+            {generatePageItems()}
+            <Pagination.Next
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            />
+          </Pagination>
+        </div>
       </div>
     </div>
   );

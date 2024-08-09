@@ -39,8 +39,8 @@ export default function PurchaseOrderList() {
       .deletePurchaseOrder(purchaseOrderId)
       .then((response) => {
         if (response.status === 200) {
-          toast(response.data.message);
-          fetchPurchaseOrders();
+          toast.success(response.data.message);
+          fetchPurchaseOrders(currentPage);
         } else {
           toast.error(response.data.message);
         }
@@ -60,7 +60,7 @@ export default function PurchaseOrderList() {
       .then((response) => {
         if (response.status === 200) {
           toast.success(response.data.message);
-          fetchPurchaseOrders();
+          fetchPurchaseOrders(currentPage);
         } else {
           toast.error(response.data.message);
         }
@@ -119,15 +119,106 @@ export default function PurchaseOrderList() {
     setOrderDate("");
     const params = new URLSearchParams();
     window.history.replaceState(null, null, `?${params.toString()}`);
-    fetchPurchaseOrders(); // Fetch all products again
+    fetchPurchaseOrders(currentPage); // Fetch all products again
   };
 
   const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
   };
 
   const handleRefresh = () => {
     window.location.reload();
+  };
+
+  const generatePageItems = () => {
+    const pageItems = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageItems.push(
+          <Pagination.Item
+            key={i}
+            active={i === currentPage}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Pagination.Item>
+        );
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= maxPagesToShow - 1; i++) {
+          pageItems.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-1" />);
+        pageItems.push(
+          <Pagination.Item
+            key={totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      } else if (currentPage > totalPages - 3) {
+        pageItems.push(
+          <Pagination.Item key={1} onClick={() => handlePageChange(1)}>
+            {1}
+          </Pagination.Item>
+        );
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-2" />);
+        for (let i = totalPages - (maxPagesToShow - 2); i <= totalPages; i++) {
+          pageItems.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+      } else {
+        pageItems.push(
+          <Pagination.Item key={1} onClick={() => handlePageChange(1)}>
+            {1}
+          </Pagination.Item>
+        );
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-3" />);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageItems.push(
+            <Pagination.Item
+              key={i}
+              active={i === currentPage}
+              onClick={() => handlePageChange(i)}
+            >
+              {i}
+            </Pagination.Item>
+          );
+        }
+        pageItems.push(<Pagination.Ellipsis key="ellipsis-4" />);
+        pageItems.push(
+          <Pagination.Item
+            key={totalPages}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Pagination.Item>
+        );
+      }
+    }
+
+    return pageItems;
   };
 
   return (
@@ -208,7 +299,7 @@ export default function PurchaseOrderList() {
           </div>
         </div>
 
-        <Table striped bordered hover>
+        <Table bordered hover>
           <thead>
             <tr>
               <th>ID</th>
@@ -260,15 +351,15 @@ export default function PurchaseOrderList() {
           </tbody>
         </Table>
         <Pagination>
-          {[...Array(totalPages)].map((_, index) => (
-            <Pagination.Item
-              key={index + 1}
-              active={index + 1 === currentPage}
-              onClick={() => handlePageChange(index + 1)}
-            >
-              {index + 1}
-            </Pagination.Item>
-          ))}
+          <Pagination.Prev
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          />
+          {generatePageItems()}
+          <Pagination.Next
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          />
         </Pagination>
       </div>
     </div>
